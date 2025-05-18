@@ -1,0 +1,35 @@
+RewriteEngine On
+RewriteBase /proyecto-3er-trayecto/
+
+# Habilitar métodos HTTP
+<Limit GET POST PUT DELETE>
+    Allow from all
+</Limit>
+
+# Redirigir solicitudes RESTful
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Reglas para usuarios
+RewriteRule ^users/(\d+)$ controllers/UserController.php?id=$1 [QSA,L]
+RewriteRule ^users/?$ controllers/UserController.php [QSA,L]
+# Auth
+RewriteRule ^auth/login$ controllers/AuthController.php?action=login [QSA,L]
+RewriteRule ^auth/logout$ controllers/AuthController.php?action=logout [QSA,L]
+
+# Reglas para categorías
+RewriteRule ^categories/(\d+)$ controllers/CategoryController.php?id=$1 [QSA,L]
+RewriteRule ^categories/?$ controllers/CategoryController.php [QSA,L]
+
+# Productos
+RewriteRule ^products$ controllers/ProductController.php [QSA,L]
+RewriteRule ^products/(\d+)$ controllers/ProductController.php?id=$1 [QSA,L]
+
+# Movimientos de inventario
+RewriteRule ^products/(\d+)/movimientos$ controllers/ProductController.php?action=movimientos&id=$1 [QSA,L]
+RewriteRule ^products/(\d+)/movements$ controllers/ProductController.php?action=movement&id=$1 [QSA,L]
+
+# Manejo de CORS para peticiones AJAX
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
