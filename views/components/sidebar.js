@@ -1,9 +1,7 @@
 const createSidebar = () => {
     const sidebarContainer = document.querySelector('#sidebar');
     const authData = JSON.parse(localStorage.getItem('authData'));
-    const currentPath = window.location.pathname.replace('/proyecto-3er-trayecto', ''); // Obtener la ruta actual
-
-    // Asignar el username con valor por defecto si no existe
+    const currentPath = window.location.pathname.replace('/proyecto-3er-trayecto', '');
     const username = authData?.user?.username || "Invitado"; 
     
     sidebarContainer.innerHTML = `
@@ -89,6 +87,14 @@ const createSidebar = () => {
                 Productos
             </a>
 
+            <a href="/proyecto-3er-trayecto/admin/movements" class="flex items-center px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all ${currentPath === '/admin/movements' ? 'bg-gray-200 dark:bg-gray-700' : ''}">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                </svg>
+                Movimientos
+            </a>
+
             <!-- Cerrar Sesión Mobile -->
             <a href="#" id="mobileLogout" class="md:hidden flex items-center px-6 py-3 text-red-600 hover:bg-red-50 transition-all mt-4 border-t dark:border-gray-700">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,9 +106,26 @@ const createSidebar = () => {
     </aside>
 
     <!-- Overlay Mobile -->
-    <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/50 z-30 md:hidden"></div>`;
-};
+    <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/50 z-30 md:hidden"></div>
 
+    <!-- Modal de Confirmación Logout -->
+    <div id="logoutModal" class="hidden fixed inset-0 bg-black/50 z-[60] backdrop-blur-sm">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 m-4 max-w-sm w-full shadow-xl z-[70]">
+                <h3 class="text-lg font-semibold mb-4 dark:text-gray-200">¿Cerrar sesión?</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">¿Estás seguro de que deseas salir de tu cuenta?</p>
+                <div class="flex justify-end gap-3">
+                    <button id="cancelLogout" class="px-4 py-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                        Cancelar
+                    </button>
+                    <button id="confirmLogout" class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">
+                        Sí, cerrar sesión
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+};
 
 document.addEventListener('DOMContentLoaded', function() {
     createSidebar();
@@ -136,53 +159,58 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
     };
 
+    // Funciones para el modal de logout
+    const showLogoutModal = () => {
+        document.getElementById('logoutModal').classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+    };
+
+    const hideLogoutModal = () => {
+        document.getElementById('logoutModal').classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+    };
+
     const handleLogout = async () => {
-    try {
-        // Obtener datos de autenticación
-        const authData = JSON.parse(localStorage.getItem('authData'));
-        
-        // Verificar si existe un token válido
-        if (!authData?.token) {
-            throw new Error('No hay sesión activa');
-        }
-
-        const response = await fetch('/proyecto-3er-trayecto/auth/logout', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${authData.token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        const result = await response.json();
-        
-        if (result.status === 'success') {
-            // Eliminar todos los datos de autenticación
-            localStorage.removeItem('authData');
+        try {
+            const authData = JSON.parse(localStorage.getItem('authData'));
             
-            // Opcional: Limpiar caché de la aplicación
-            caches.keys().then(names => {
-                names.forEach(name => caches.delete(name));
-            });
+            if (!authData?.token) {
+                throw new Error('No hay sesión activa');
+            }
 
-            // Redirigir y recargar para limpiar estado
+            const response = await fetch('/proyecto-3er-trayecto/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${authData.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                hideLogoutModal();
+                localStorage.removeItem('authData');
+                window.location.href = '/proyecto-3er-trayecto/login?error=session_expired';
+            }
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error);
+            hideLogoutModal();
+            localStorage.removeItem('authData');
             window.location.href = '/proyecto-3er-trayecto/login?error=session_expired';
         }
-    } catch (error) {
-        console.error('Error al cerrar sesión:', error);
-        // Forzar limpieza aunque falle el servidor
-        localStorage.removeItem('authData');
-        window.location.href = '/proyecto-3er-trayecto/login?error=session_expired';
-    }
-};
-
+    };
 
     // Event Listeners
     mobileMenuButton?.addEventListener('click', toggleSidebar);
     sidebarOverlay?.addEventListener('click', toggleSidebar);
     themeToggle?.addEventListener('click', toggleTheme);
-    document.getElementById('logoutButton')?.addEventListener('click', handleLogout);
-    document.getElementById('mobileLogout')?.addEventListener('click', handleLogout);
+    
+    // Logout handlers
+    document.getElementById('logoutButton')?.addEventListener('click', showLogoutModal);
+    document.getElementById('mobileLogout')?.addEventListener('click', showLogoutModal);
+    document.getElementById('confirmLogout')?.addEventListener('click', handleLogout);
+    document.getElementById('cancelLogout')?.addEventListener('click', hideLogoutModal);
 
     // Cargar tema guardado
     const savedTheme = localStorage.getItem('theme');

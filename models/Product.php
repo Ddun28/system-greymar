@@ -18,6 +18,18 @@ class Product {
         $this->db = Database::getInstance();
     }
 
+    public function beginTransaction() {
+    $this->db->beginTransaction();
+}
+
+public function commit() {
+    $this->db->commit();
+}
+
+public function rollBack() {
+    $this->db->rollBack();
+}
+
     public function create() {
         $this->validateRequiredFields(['nombre', 'categoria_id', 'stock']);
         

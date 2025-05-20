@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
         totalProducts: document.querySelector('[data-stat="total-products"]'),
         totalCategories: document.querySelector('[data-stat="total-categories"]'),
         lowStockCount: document.querySelector('[data-stat="low-stock"]'),
-        productsList: document.querySelector('#products-list tbody'),
+        productsList: document.querySelector('#products-list'),
         categoriesGrid: document.querySelector('#categories-grid'),
         recentMovements: document.querySelector('#recent-movements')
     };
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderStockChart(products.data);
                 renderCategoryChart(products.data, categories.data);
                 renderRecentProducts(products.data);
-                renderCategories(categories.data);
+                renderCategories(categories.data, products.data);
                 renderRecentMovements(movements.data);
             }
         } catch (error) {
@@ -117,78 +117,95 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderRecentProducts(products) {
-        const recentProducts = products.slice(-5).reverse();
-        elements.productsList.innerHTML = recentProducts.map(product => `
-            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                        ${product.imagen ? 
-                            `<img src="${product.imagen}" 
-                                class="w-10 h-10 object-cover rounded-lg mr-3 border dark:border-gray-600"
-                                alt="${product.nombre}">` : 
-                            '<div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg mr-3"></div>'}
-                        <span class="text-sm dark:text-gray-300 font-medium">${product.nombre}</span>
-                    </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-400">
-                    ${getCategoryName(product.categoria_id)}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">
-                    $${product.precio?.toFixed(2) || '0.00'}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center">
-                        <div class="h-2 w-20 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div class="h-full ${getStockColor(product.stock)}" 
-                                style="width: ${(product.stock / 100) * 100}%"></div>
-                        </div>
-                        <span class="ml-2 text-sm dark:text-gray-400">${product.stock}</span>
-                    </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex space-x-3">
-                        <button class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                            onclick="editProduct(${product.id})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                            onclick="deleteProduct(${product.id})">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `).join('');
+
+    // Verifica si hay productos
+    if (!Array.isArray(products) || products.length === 0) {
+        console.warn("No hay productos para mostrar."); // Log de advertencia si no hay productos
+        elements.productsList.innerHTML = '<tr><td colspan="5" class="text-center">No hay productos disponibles.</td></tr>';
+        return;
     }
 
-    function renderCategories(categories) {
-        elements.categoriesGrid.innerHTML = categories.map(category => `
-            <div class="p-4 rounded-lg bg-gradient-to-br ${getCategoryColor(category.id)} border ${getCategoryBorder(category.id)}">
-                <p class="font-medium dark:text-gray-300">${category.nombre}</p>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                    ${category.product_count || 0} productos
-                </p>
-            </div>
-        `).join('');
-    }
+    const recentProducts = products.slice(-5).reverse();
+
+    elements.productsList.innerHTML = recentProducts.map(product => `
+        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    ${product.imagen ? 
+                        `<img src="${product.imagen}" 
+                            class="w-10 h-10 object-cover rounded-lg mr-3 border dark:border-gray-600"
+                            alt="${product.nombre}">` : 
+                        '<div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg mr-3"></div>'}
+                    <span class="text-sm dark:text-gray-300 font-medium">${product.nombre}</span>
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-400">
+                ${product.categoria || 'Sin categoría'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm dark:text-gray-300">
+                $${product.precio_venta?.toFixed(2) || '0.00'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <div class="h-2 w-20 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full ${getStockColor(product.stock)}" 
+                            style="width: ${Math.min(product.stock, 100)}%"></div>
+                    </div>
+                    <span class="ml-2 text-sm dark:text-gray-400">${product.stock}</span>
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex space-x-3">
+                    <button class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        onclick="editProduct(${product.id})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                        onclick="deleteProduct(${product.id})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+
+    function renderCategories(categories, products) { // Agregar parámetro products
+    // Calcular conteo de productos por categoría
+    const categoryCounts = categories.reduce((acc, category) => {
+        acc[category.id] = products.filter(p => p.categoria_id === category.id).length; // Quitar .data
+        return acc;
+    }, {});
+
+    elements.categoriesGrid.innerHTML = categories.map(category => `
+        <div class="p-4 rounded-lg bg-gradient-to-br ${getCategoryColor(category.id)} border ${getCategoryBorder(category.id)}">
+            <p class="font-medium dark:text-gray-300">${category.nombre}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">
+                ${categoryCounts[category.id] || 0} productos
+            </p>
+        </div>
+    `).join('');
+}
 
     function renderRecentMovements(movements) {
-        elements.recentMovements.innerHTML = movements.map(movement => `
-            <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border dark:border-gray-700 mb-2">
-                <div>
-                    <p class="font-medium dark:text-gray-300">
-                        ${movement.tipo === 'entrada' ? 'Entrada' : 'Salida'} de Stock
-                    </p>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                        ${movement.producto_nombre} (${movement.tipo === 'entrada' ? '+' : '-'}${movement.cantidad})
-                    </p>
-                </div>
-                <span class="text-sm ${movement.tipo === 'entrada' ? 'text-green-600' : 'text-red-600'} dark:text-gray-300">
-                    ${new Date(movement.created_at).toLocaleDateString()}
-                </span>
+    elements.recentMovements.innerHTML = movements.map(movement => `
+        <div class="...">
+            <div>
+                <p class="dark:text-white">
+                    ${movement.tipo === 'entrada' ? 'Entrada' : 'Salida'} de Stock
+                </p>
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                    ${movement.producto_nombre || 'Producto no encontrado'} 
+                    (${movement.tipo === 'entrada' ? '+' : '-'}${movement.cantidad})
+                </p>
             </div>
-        `).join('');
-    }
+            <span class="dark:text-white">
+                ${new Date(movement.created_at).toLocaleDateString()}
+            </span>
+        </div>
+    `).join('');
+}
 
     // Funciones auxiliares
     function getChartOptions(title) {
@@ -265,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Botón nuevo producto
         document.querySelector('#new-product-btn').addEventListener('click', () => {
-            window.location.href = '/products';
+            window.location.href = '/proyecto-3er-trayecto/admin/product';
         });
     }
 

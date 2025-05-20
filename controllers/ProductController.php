@@ -11,6 +11,18 @@ class ProductController {
         $this->model = new Product();
         header('Content-Type: application/json');
     }
+    
+     public function beginTransaction() {
+        $this->db->beginTransaction();
+    }
+
+    public function commit() {
+        $this->db->commit();
+    }
+
+    public function rollBack() {
+        $this->db->rollBack();
+    }
 
     public function handleRequest() {
         try {
@@ -51,7 +63,7 @@ class ProductController {
         }
     }
 
-    private function handleMovementRequest($productId) {
+       private function handleMovementRequest($productId) {
         $input = json_decode(file_get_contents('php://input'), true);
         $required = ['tipo', 'cantidad'];
         
@@ -84,22 +96,21 @@ class ProductController {
                 ? $product['stock'] + $input['cantidad']
                 : $product['stock'] - $input['cantidad'];
 
-            // Iniciar transacción
-            $this->model->getDb()->beginTransaction();
+            // Iniciar transacción usando el modelo Product
+            $this->model->beginTransaction();
 
             // Actualizar stock
             $this->model->stock = $newStock;
             $this->model->update();
 
-            // Registrar movimiento
-            $movement = new Movement();
-            $movement->producto_id = $productId;
-            $movement->tipo = $input['tipo'];
-            $movement->cantidad = $input['cantidad'];
-            $movement->motivo = $input['motivo'] ?? null;
-            $movement->create();
+            // Registrar movimiento usando el movementModel
+            $this->movementModel->producto_id = $productId;
+            $this->movementModel->tipo = $input['tipo'];
+            $this->movementModel->cantidad = $input['cantidad'];
+            $this->movementModel->motivo = $input['motivo'] ?? null;
+            $this->movementModel->create();
 
-            $this->model->getDb()->commit();
+            $this->model->commit();
 
             echo json_encode([
                 'status' => 'success',
@@ -108,10 +119,12 @@ class ProductController {
             ]);
             
         } catch (Exception $e) {
-            $this->model->getDb()->rollBack();
+            $this->model->rollBack();
             $this->sendError($e->getMessage(), 400);
         }
     }
+
+
 
     private function getMovements($productId) {
         try {
@@ -130,20 +143,20 @@ class ProductController {
     }
 
     private function getInput() {
-    // Para formularios multipart (con archivos)
-    if (!empty($_FILES)) {
-        return [
-            'nombre' => $_POST['nombre'] ?? null,
-            'descripcion' => $_POST['descripcion'] ?? null,
-            'categoria_id' => $_POST['categoria_id'] ?? null,
-            'stock' => $_POST['stock'] ?? 0,
-            'imagen' => !empty($_FILES['imagen']) ? $this->handleImageUpload($_FILES['imagen']) : null
-        ];
+        // Para formularios multipart (con archivos)
+        if (!empty($_FILES)) {
+            return [
+                'nombre' => $_POST['nombre'] ?? null,
+                'descripcion' => $_POST['descripcion'] ?? null,
+                'categoria_id' => $_POST['categoria_id'] ?? null,
+                'stock' => $_POST['stock'] ?? 0,
+                'imagen' => !empty($_FILES['imagen']) ? $this->handleImageUpload($_FILES['imagen']) : null
+            ];
+        }
+        
+        // Para JSON
+        return json_decode(file_get_contents('php://input'), true) ?? [];
     }
-    
-    // Para JSON
-    return json_decode(file_get_contents('php://input'), true) ?? [];
-}
 
     private function handleImageUpload($file) {
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
@@ -205,57 +218,57 @@ class ProductController {
     }
 
     private function createProduct($data) {
-    try {
-        // Validar campos requeridos
-        if (empty($data['nombre']) || empty($data['categoria_id'])) {
-            throw new Exception("Campos requeridos faltantes");
+        try {
+            // Validar campos requeridos
+            if (empty($data['nombre']) || empty($data['categoria_id'])) {
+                throw new Exception("Campos requeridos faltantes");
+            }
+
+            $this->model->nombre = $data['nombre'];
+            $this->model->descripcion = $data['descripcion'] ?? null;
+            $this->model->imagen = $data['imagen'] ?? null;
+            $this->model->categoria_id = $data['categoria_id'];
+            $this->model->stock = $data['stock'] ?? 0;
+
+            $id = $this->model->create();
+            
+            http_response_code(201);
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Producto creado',
+                'data' => ['id' => $id]
+            ]);
+            
+        } catch (Exception $e) {
+            $this->sendError($e->getMessage(), 400);
         }
-
-        $this->model->nombre = $data['nombre'];
-        $this->model->descripcion = $data['descripcion'] ?? null;
-        $this->model->imagen = $data['imagen'] ?? null;
-        $this->model->categoria_id = $data['categoria_id'];
-        $this->model->stock = $data['stock'] ?? 0;
-
-        $id = $this->model->create();
-        
-        http_response_code(201);
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Producto creado',
-            'data' => ['id' => $id]
-        ]);
-        
-    } catch (Exception $e) {
-        $this->sendError($e->getMessage(), 400);
     }
-}
 
-private function updateProduct($id, $data) {
-    try {
-        // Validar campos requeridos
-        if (empty($data['nombre']) || empty($data['categoria_id'])) {
-            throw new Exception("Campos requeridos faltantes");
+    private function updateProduct($id, $data) {
+        try {
+            // Validar campos requeridos
+            if (empty($data['nombre']) || empty($data['categoria_id'])) {
+                throw new Exception("Campos requeridos faltantes");
+            }
+
+            $this->model->id = $id;
+            $this->model->nombre = $data['nombre'];
+            $this->model->descripcion = $data['descripcion'] ?? null;
+            $this->model->imagen = $data['imagen'] ?? null;
+            $this->model->categoria_id = $data['categoria_id'];
+            $this->model->stock = $data['stock'] ?? 0;
+
+            $this->model->update();
+            
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Producto actualizado'
+            ]);
+            
+        } catch (Exception $e) {
+            $this->sendError($e->getMessage(), 400);
         }
-
-        $this->model->id = $id;
-        $this->model->nombre = $data['nombre'];
-        $this->model->descripcion = $data['descripcion'] ?? null;
-        $this->model->imagen = $data['imagen'] ?? null;
-        $this->model->categoria_id = $data['categoria_id'];
-        $this->model->stock = $data['stock'] ?? 0;
-
-        $this->model->update();
-        
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Producto actualizado'
-        ]);
-        
-    } catch (Exception $e) {
-        $this->sendError($e->getMessage(), 400);
     }
-}
 
     private function deleteProduct($id) {
         try {

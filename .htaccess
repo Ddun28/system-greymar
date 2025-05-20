@@ -29,13 +29,17 @@ RewriteRule ^products/(\d+)$ controllers/ProductController.php?id=$1 [QSA,L]
 RewriteRule ^products/(\d+)/movimientos$ controllers/ProductController.php?action=product_movements&id=$1 [QSA,L]
 RewriteRule ^products/(\d+)/movements$ controllers/ProductController.php?action=movement&id=$1 [QSA,L]
 RewriteRule ^movimientos$ controllers/MovementsController.php [QSA,L]
+RewriteRule ^movimientos/(\d+)$ controllers/MovementsController.php?id=$1 [QSA,L]
+RewriteCond %{REQUEST_METHOD} PUT
+RewriteRule ^movimientos/(\d+)$ controllers/MovementController.php?id=$1 [QSA,L]
 
 # 3. Rutas del Frontend (Vistas)
 # -------------------------------------------------------------------
 RewriteRule ^login$ views/auth/index.html [L]
 RewriteRule ^admin/users$ views/admin/users/index.html [L]  # Regla específica para users
 RewriteRule ^admin/category$ views/admin/category/index.html [L]  # Regla específica para category
-RewriteRule ^admin/product$ views/admin/product/index.html [L]  # Regla específica para category
+RewriteRule ^admin/product$ views/admin/product/index.html [L]  # Regla específica para product
+RewriteRule ^admin/movements$ views/admin/movements/index.html [L]  # Regla específica para movements
 RewriteRule ^admin(/.*)?$ views/admin/index.html [L]  # Regla general para admin
 RewriteRule ^$ views/index.html [L]
 RewriteRule ^views/components/sidebar\.js$ views/components/sidebar.js [L]

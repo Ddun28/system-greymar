@@ -1,11 +1,141 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Gestión de Movimientos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        corePlugins: {
+          preflight: true,
+        }
+      };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
-    
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div id="sidebar"></div>
+
+    <main class="flex-1 md:ml-64 md:mt-16 p-4 md:p-8 min-h-screen">
+        <!-- Header y Botón -->
+        <div class="flex flex-col md:flex-row justify-between items-start mb-8 gap-4">
+            <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Gestión de Movimientos</h1>
+            <button onclick="openMovementModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                + Nuevo Movimiento
+            </button>
+        </div>
+
+        <!-- Tabla de Movimientos -->
+        <div class="overflow-x-auto rounded-lg shadow-lg border dark:border-gray-700">
+            <table class="w-full">
+                <thead class="bg-gray-100 dark:bg-gray-800">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Fecha</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Producto</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Cantidad</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Tipo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700" id="movements-list">
+                    <!-- Datos cargados dinámicamente -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal Movimiento -->
+<div id="movementModal" class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 transition-opacity">
+    <div class="flex items-center justify-center min-h-screen">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md transform transition-all">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold dark:text-gray-100" id="movementModalTitle">Nuevo Movimiento</h3>
+                <button onclick="closeMovementModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="movementForm" class="space-y-4">
+                <input type="hidden" id="movementId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Producto</label>
+                    <select id="movementProduct" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" required>
+                        <!-- Opciones se cargarán dinámicamente -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cantidad</label>
+                    <input type="number" id="movementQuantity" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
+                    <select id="movementType" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100" required>
+                        <option value="entrada">Entrada</option>
+                        <option value="salida">Salida</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Motivo (opcional)</label>
+                    <input type="text" id="movementReason" class="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
+                </div>
+
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="closeMovementModal()" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="saveMovement()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+        <div id="notificationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50">
+            <div class="flex items-center justify-center min-h-screen">
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md transform transition-all">
+                    <div class="text-center">
+                        <i id="notificationIcon" class="fas fa-check-circle text-3xl mb-4 text-green-500"></i>
+                        <h3 id="notificationText" class="text-lg font-semibold dark:text-gray-100"></h3>
+                        <button onclick="closeNotification()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            Aceptar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal de Confirmación Eliminar -->
+        <div id="deleteModal" class="hidden fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50">
+            <div class="flex items-center justify-center min-h-screen">
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md transform transition-all">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-4 text-red-500"></i>
+                        <h3 id="deleteMessage" class="text-lg font-semibold dark:text-gray-100">¿Estás seguro de eliminar este movimiento?</h3>
+                        <div class="mt-6 flex justify-center space-x-4">
+                            <button onclick="closeDeleteModal()" class="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                Cancelar
+                            </button>
+                            <button onclick="confirmDelete()" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="/proyecto-3er-trayecto/views/components/sidebar.js"></script>
+    <script src="/proyecto-3er-trayecto/views/admin/movements/index.js"></script>
+
 </body>
 </html>

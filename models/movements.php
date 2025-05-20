@@ -57,11 +57,55 @@ class Movement {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getById($id) {
+    $query = "SELECT * FROM movimientos_inventario WHERE id = :id";
+    $stmt = $this->db->prepare($query);
+    $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+    $stmt->execute();
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
+public function update() {
+    $this->validateRequiredFields(['id', 'tipo', 'cantidad']);
+    
+    $query = "UPDATE movimientos_inventario SET 
+                tipo = :tipo,
+                cantidad = :cantidad,
+                motivo = :motivo
+              WHERE id = :id";
+    
+    $stmt = $this->db->prepare($query);
+    $stmt->bindParam(':tipo', $this->tipo);
+    $stmt->bindParam(':cantidad', $this->cantidad, PDO::PARAM_INT);
+    $stmt->bindParam(':motivo', $this->motivo);
+    $stmt->bindParam(':id', $this->id, PDO::PARAM_INT);
+    
+    if(!$stmt->execute()) {
+        throw new Exception("Error al actualizar movimiento");
+    }
+    
+    return true;
+}
+
+    public function delete() {
+        $this->validateRequiredFields(['id']);
+        
+        $query = "DELETE FROM movimientos_inventario WHERE id = :id";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':id', $this->id, PDO::PARAM_INT);
+        
+        if(!$stmt->execute()) {
+            throw new Exception("Error al eliminar movimiento");
+        }
+        
+        return true;
+    }
+
     public function getRecent($limit = 10) {
     $query = "SELECT m.*, p.nombre as producto_nombre 
               FROM movimientos_inventario m
-              JOIN productos p ON m.producto_id = p.id
-              ORDER BY m.created_at DESC
+              LEFT JOIN productos p ON m.producto_id = p.id
+              ORDER BY m.created_at DESC 
               LIMIT :limit";
     
     $stmt = $this->db->prepare($query);

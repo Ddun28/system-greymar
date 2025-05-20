@@ -29,6 +29,11 @@ class Router {
                 script: `${this.basePath}/public/assets/js/app/admin/product.js`,
                 protected: true
             },
+            '/admin/movements': {
+                view: `${this.basePath}/views/admin/movements/index.html`,
+                script: `${this.basePath}/public/assets/js/app/admin/product.js`,
+                protected: true
+            },
         };
         this.init();
     }
