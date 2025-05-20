@@ -1,6 +1,10 @@
 const createSidebar = () => {
     const sidebarContainer = document.querySelector('#sidebar');
-    const username = "Dun"; 
+    const authData = JSON.parse(localStorage.getItem('authData'));
+    const currentPath = window.location.pathname.replace('/proyecto-3er-trayecto', ''); // Obtener la ruta actual
+
+    // Asignar el username con valor por defecto si no existe
+    const username = authData?.user?.username || "Invitado"; 
     
     sidebarContainer.innerHTML = `
     <!-- Navbar Superior -->
@@ -46,13 +50,15 @@ const createSidebar = () => {
     <aside class="sidebar-content bg-white dark:bg-gray-800 w-64 shadow-xl fixed h-full -translate-x-full md:translate-x-0 transition-transform duration-300 z-40 pt-16 md:pt-0">
         <div class="p-6">
             <h2 class="text-2xl font-bold bg-gradient-to-r from-[#4F46E5] md:pt-4 to-[#06B6D4] bg-clip-text text-transparent">
-                GREYMAR
+            <a href="/proyecto-3er-trayecto/admin">
+            GREYMAR
+            <a/>     
             </h2>
         </div>
         
         <nav class="mt-6">
             <!-- Inicio -->
-            <a href="../../admin/index.html" class="flex items-center px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+            <a href="/proyecto-3er-trayecto/admin" class="flex items-center px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all ${currentPath === '/admin' ? 'bg-gray-200 dark:bg-gray-700' : ''}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                 </svg>
@@ -60,7 +66,7 @@ const createSidebar = () => {
             </a>
 
             <!-- Usuarios -->
-            <a href="../admin/users/index.html" class="flex items-center px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+            <a href="/proyecto-3er-trayecto/admin/users" class="flex items-center px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all ${currentPath === '/admin/users' ? 'bg-gray-200 dark:bg-gray-700' : ''}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                 </svg>
@@ -68,7 +74,7 @@ const createSidebar = () => {
             </a>
 
             <!-- Categorías -->
-            <a href="../admin/category/index.html" class="flex items-center px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+            <a href="/proyecto-3er-trayecto/admin/category" class="flex items-center px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all ${currentPath === '/admin/category' ? 'bg-gray-200 dark:bg-gray-700' : ''}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
                 </svg>
@@ -76,7 +82,7 @@ const createSidebar = () => {
             </a>
 
             <!-- Productos -->
-            <a href="../admin/product/index.html" class="flex items-center px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all">
+            <a href="/proyecto-3er-trayecto/admin/product" class="flex items-center px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all ${currentPath === '/admin/product' ? 'bg-gray-200 dark:bg-gray-700' : ''}">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
                 </svg>
@@ -96,6 +102,7 @@ const createSidebar = () => {
     <!-- Overlay Mobile -->
     <div id="sidebarOverlay" class="hidden fixed inset-0 bg-black/50 z-30 md:hidden"></div>`;
 };
+
 
 document.addEventListener('DOMContentLoaded', function() {
     createSidebar();
@@ -129,26 +136,46 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
     };
 
-    // Manejar Logout
     const handleLogout = async () => {
-        try {
-            const response = await fetch('/proyecto-3er-trayecto/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('jwt')}`
-                }
-            });
-            
-            const result = await response.json();
-            
-            if (result.status === 'success') {
-                localStorage.removeItem('jwt');
-                window.location.href = '../auth/index.html';
-            }
-        } catch (error) {
-            console.error('Error al cerrar sesión:', error);
+    try {
+        // Obtener datos de autenticación
+        const authData = JSON.parse(localStorage.getItem('authData'));
+        
+        // Verificar si existe un token válido
+        if (!authData?.token) {
+            throw new Error('No hay sesión activa');
         }
-    };
+
+        const response = await fetch('/proyecto-3er-trayecto/auth/logout', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authData.token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            // Eliminar todos los datos de autenticación
+            localStorage.removeItem('authData');
+            
+            // Opcional: Limpiar caché de la aplicación
+            caches.keys().then(names => {
+                names.forEach(name => caches.delete(name));
+            });
+
+            // Redirigir y recargar para limpiar estado
+            window.location.href = '/proyecto-3er-trayecto/login?error=session_expired';
+        }
+    } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+        // Forzar limpieza aunque falle el servidor
+        localStorage.removeItem('authData');
+        window.location.href = '/proyecto-3er-trayecto/login?error=session_expired';
+    }
+};
+
 
     // Event Listeners
     mobileMenuButton?.addEventListener('click', toggleSidebar);

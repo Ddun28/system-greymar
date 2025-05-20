@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+    const authData = localStorage.getItem('authData');
+    if( !authData){
+        window.location.href = '/proyecto-3er-trayecto/login';
+    }
+
     const apiBaseUrl = '/proyecto-3er-trayecto/categories';
     let currentCategoryId = null;
     

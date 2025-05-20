@@ -1,23 +1,23 @@
 RewriteEngine On
 RewriteBase /proyecto-3er-trayecto/
 
-# Habilitar métodos HTTP
-<Limit GET POST PUT DELETE>
-    Allow from all
-</Limit>
+# 1. Manejar archivos estáticos
+# -------------------------------------------------------------------
+RewriteCond %{REQUEST_URI} \.(js|css|png|jpg|jpeg|gif|ico|svg|html|json|txt)$ [NC]
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
 
-# Redirigir solicitudes RESTful
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-
-# Reglas para usuarios
-RewriteRule ^users/(\d+)$ controllers/UserController.php?id=$1 [QSA,L]
-RewriteRule ^users/?$ controllers/UserController.php [QSA,L]
+# 2. Rutas de la API (Backend)
+# -------------------------------------------------------------------
 # Auth
 RewriteRule ^auth/login$ controllers/AuthController.php?action=login [QSA,L]
 RewriteRule ^auth/logout$ controllers/AuthController.php?action=logout [QSA,L]
 
-# Reglas para categorías
+# Usuarios
+RewriteRule ^users/(\d+)$ controllers/UserController.php?id=$1 [QSA,L]
+RewriteRule ^users/?$ controllers/UserController.php [QSA,L]
+
+# Categorías
 RewriteRule ^categories/(\d+)$ controllers/CategoryController.php?id=$1 [QSA,L]
 RewriteRule ^categories/?$ controllers/CategoryController.php [QSA,L]
 
@@ -25,11 +25,28 @@ RewriteRule ^categories/?$ controllers/CategoryController.php [QSA,L]
 RewriteRule ^products$ controllers/ProductController.php [QSA,L]
 RewriteRule ^products/(\d+)$ controllers/ProductController.php?id=$1 [QSA,L]
 
-# Movimientos de inventario
-RewriteRule ^products/(\d+)/movimientos$ controllers/ProductController.php?action=movimientos&id=$1 [QSA,L]
+# Movimientos
+RewriteRule ^products/(\d+)/movimientos$ controllers/ProductController.php?action=product_movements&id=$1 [QSA,L]
 RewriteRule ^products/(\d+)/movements$ controllers/ProductController.php?action=movement&id=$1 [QSA,L]
+RewriteRule ^movimientos$ controllers/MovementsController.php [QSA,L]
 
-# Manejo de CORS para peticiones AJAX
+# 3. Rutas del Frontend (Vistas)
+# -------------------------------------------------------------------
+RewriteRule ^login$ views/auth/index.html [L]
+RewriteRule ^admin/users$ views/admin/users/index.html [L]  # Regla específica para users
+RewriteRule ^admin/category$ views/admin/category/index.html [L]  # Regla específica para category
+RewriteRule ^admin/product$ views/admin/product/index.html [L]  # Regla específica para category
+RewriteRule ^admin(/.*)?$ views/admin/index.html [L]  # Regla general para admin
+RewriteRule ^$ views/index.html [L]
+RewriteRule ^views/components/sidebar\.js$ views/components/sidebar.js [L]
+
+# 4. Catch-all para SPA (Single Page Application)
+# -------------------------------------------------------------------
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ views/index.html [L]
+
+# Configuración CORS
 Header always set Access-Control-Allow-Origin "*"
 Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
+Header always set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"

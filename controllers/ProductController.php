@@ -1,6 +1,6 @@
 <?php
 require_once '../models/Product.php';
-require_once '../models/Movement.php';
+require_once '../models/Movements.php';
 
 class ProductController {
     private $model;
@@ -130,14 +130,20 @@ class ProductController {
     }
 
     private function getInput() {
-        $input = json_decode(file_get_contents('php://input'), true) ?? [];
-        
-        if (!empty($_FILES['imagen'])) {
-            $input['imagen'] = $this->handleImageUpload($_FILES['imagen']);
-        }
-        
-        return $input;
+    // Para formularios multipart (con archivos)
+    if (!empty($_FILES)) {
+        return [
+            'nombre' => $_POST['nombre'] ?? null,
+            'descripcion' => $_POST['descripcion'] ?? null,
+            'categoria_id' => $_POST['categoria_id'] ?? null,
+            'stock' => $_POST['stock'] ?? 0,
+            'imagen' => !empty($_FILES['imagen']) ? $this->handleImageUpload($_FILES['imagen']) : null
+        ];
     }
+    
+    // Para JSON
+    return json_decode(file_get_contents('php://input'), true) ?? [];
+}
 
     private function handleImageUpload($file) {
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
@@ -199,47 +205,57 @@ class ProductController {
     }
 
     private function createProduct($data) {
-        try {
-            $this->model->nombre = $data['nombre'];
-            $this->model->descripcion = $data['descripcion'] ?? null;
-            $this->model->imagen = $data['imagen'] ?? null;
-            $this->model->categoria_id = $data['categoria_id'];
-            $this->model->stock = $data['stock'] ?? 0;
-
-            $id = $this->model->create();
-            
-            http_response_code(201);
-            echo json_encode([
-                'status' => 'success',
-                'message' => 'Producto creado',
-                'data' => ['id' => $id]
-            ]);
-            
-        } catch (Exception $e) {
-            $this->sendError($e->getMessage(), 400);
+    try {
+        // Validar campos requeridos
+        if (empty($data['nombre']) || empty($data['categoria_id'])) {
+            throw new Exception("Campos requeridos faltantes");
         }
+
+        $this->model->nombre = $data['nombre'];
+        $this->model->descripcion = $data['descripcion'] ?? null;
+        $this->model->imagen = $data['imagen'] ?? null;
+        $this->model->categoria_id = $data['categoria_id'];
+        $this->model->stock = $data['stock'] ?? 0;
+
+        $id = $this->model->create();
+        
+        http_response_code(201);
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Producto creado',
+            'data' => ['id' => $id]
+        ]);
+        
+    } catch (Exception $e) {
+        $this->sendError($e->getMessage(), 400);
     }
+}
 
-    private function updateProduct($id, $data) {
-        try {
-            $this->model->id = $id;
-            $this->model->nombre = $data['nombre'];
-            $this->model->descripcion = $data['descripcion'] ?? null;
-            $this->model->imagen = $data['imagen'] ?? null;
-            $this->model->categoria_id = $data['categoria_id'];
-            $this->model->stock = $data['stock'] ?? 0;
-
-            $this->model->update();
-            
-            echo json_encode([
-                'status' => 'success',
-                'message' => 'Producto actualizado'
-            ]);
-            
-        } catch (Exception $e) {
-            $this->sendError($e->getMessage(), 400);
+private function updateProduct($id, $data) {
+    try {
+        // Validar campos requeridos
+        if (empty($data['nombre']) || empty($data['categoria_id'])) {
+            throw new Exception("Campos requeridos faltantes");
         }
+
+        $this->model->id = $id;
+        $this->model->nombre = $data['nombre'];
+        $this->model->descripcion = $data['descripcion'] ?? null;
+        $this->model->imagen = $data['imagen'] ?? null;
+        $this->model->categoria_id = $data['categoria_id'];
+        $this->model->stock = $data['stock'] ?? 0;
+
+        $this->model->update();
+        
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Producto actualizado'
+        ]);
+        
+    } catch (Exception $e) {
+        $this->sendError($e->getMessage(), 400);
     }
+}
 
     private function deleteProduct($id) {
         try {

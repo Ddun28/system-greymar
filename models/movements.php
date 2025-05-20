@@ -3,7 +3,7 @@ require_once '../config/database.php';
 
 class Movement {
     private $db;
-    private $table = 'movimientos';
+    private $table = 'movimientos_inventario';
 
     public $id;
     public $producto_id;
@@ -56,6 +56,20 @@ class Movement {
         
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function getRecent($limit = 10) {
+    $query = "SELECT m.*, p.nombre as producto_nombre 
+              FROM movimientos_inventario m
+              JOIN productos p ON m.producto_id = p.id
+              ORDER BY m.created_at DESC
+              LIMIT :limit";
+    
+    $stmt = $this->db->prepare($query);
+    $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
     private function validateRequiredFields($fields) {
         foreach ($fields as $field) {
