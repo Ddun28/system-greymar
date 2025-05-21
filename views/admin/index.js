@@ -19,6 +19,58 @@ document.addEventListener('DOMContentLoaded', () => {
         recentMovements: document.querySelector('#recent-movements')
     };
 
+    document.querySelector('#generatePdf')?.addEventListener('click', generateInventoryReport);
+
+   async function generateInventoryReport() {
+       try {
+           const jsPDF = window.jspdf.jsPDF;
+           const doc = new jsPDF('landscape');
+
+           // Obtener todos los productos
+           const productsResponse = await fetch(`${apiBaseUrl}/products`);
+           const productsData = await productsResponse.json();
+           const allProducts = productsData.data;
+
+           // Configuración inicial
+           doc.setFontSize(18);
+           doc.text('Reporte de Inventario Completo', 15, 20);
+           doc.setFontSize(12);
+           doc.setTextColor(100);
+           
+           let yPosition = 30;
+
+           // Tabla de Productos Completa
+           doc.setFontSize(14);
+           doc.text('Listado Completo de Productos:', 15, yPosition);
+           yPosition += 10;
+           
+           const headers = [["Nombre", "Categoría", "Precio", "Stock"]];
+           const rows = allProducts.map(p => [
+               p.nombre,
+               p.categoria || 'Sin categoría',
+               `$${p.precio_venta?.toFixed(2) || '0.00'}`,
+               p.stock.toString()
+           ]);
+           
+            doc.autoTable({
+               startY: yPosition,
+               head: headers,
+               body: rows,
+               theme: 'grid',
+               styles: { fontSize: 10 },
+               headStyles: { fillColor: [41, 128, 185] }
+           });
+           
+           // Guardar PDF
+           doc.save(`reporte-inventario-${new Date().toISOString().split('T')[0]}.pdf`);
+
+       } catch (error) {
+           console.error('Error generando PDF:', error);
+           showNotification('Error al generar el reporte', 'error');
+       }
+   }
+   
+
     // Inicialización
     init();
 
