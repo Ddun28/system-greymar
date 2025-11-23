@@ -47,11 +47,9 @@ const createSidebar = () => {
     <!-- Sidebar -->
     <aside class="sidebar-content bg-white dark:bg-gray-800 w-64 shadow-xl fixed h-full -translate-x-full md:translate-x-0 transition-transform duration-300 z-40 pt-16 md:pt-0">
         <div class="p-6">
-            <h2 class="text-2xl font-bold bg-gradient-to-r from-[#4F46E5] md:pt-4 to-[#06B6D4] bg-clip-text text-transparent">
-            <a href="/proyecto-3er-trayecto/admin">
-            GREYMAR
-            <a/>     
-            </h2>
+            <a href="/proyecto-3er-trayecto/admin" class="inline-block">
+                <img src="/proyecto-3er-trayecto/image/logo-greymar.jpg" alt="Greymar" class="h-10 object-contain">
+            </a>
         </div>
         
         <nav class="mt-6">

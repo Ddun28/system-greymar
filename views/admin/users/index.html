@@ -4,18 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/proyecto-3er-trayecto/public/output.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/proyecto-3er-trayecto/public/assets/libs/chart.min.js"></script>
     <script>
-      tailwind.config = {
-        darkMode: 'class',
-        corePlugins: {
-          preflight: true,
-        }
-      };
+      // Aplicar modo oscuro antes de que se cargue la página
+      if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
     <div id="sidebar"></div>
@@ -54,7 +53,9 @@
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-lg font-semibold dark:text-gray-100" id="modalTitle">Nuevo Usuario</h3>
                         <button class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                            <i class="fas fa-times"></i>
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
                         </button>
                     </div>
                     

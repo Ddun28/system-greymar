@@ -105,11 +105,11 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.innerHTML = `
                 <td class="px-6 py-4 dark:text-white">${category.nombre}</td>
                 <td class="px-6 py-4 dark:text-white">${category.descripcion || '-'}</td>
-                <td class="px-6 py-4 flex space-x-2">
-                    <button data-action="edit" data-id="${category.id}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                <td class="px-6 py-4">
+                    <button data-action="edit" data-id="${category.id}" class="text-blue-600 hover:underline">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button data-action="delete" data-id="${category.id}" class="text-red-600 hover:text-red-800 dark:text-red-400">
+                    <button data-action="delete" data-id="${category.id}" class="text-red-600 hover:underline ml-3">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>`;

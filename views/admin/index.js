@@ -207,16 +207,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex space-x-3">
-                    <button class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                        onclick="editProduct(${product.id})">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                        onclick="deleteProduct(${product.id})">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
+                <button class="text-blue-600 hover:underline"
+                    onclick="editProduct(${product.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="text-red-600 hover:underline ml-3"
+                    onclick="deleteProduct(${product.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
             </td>
         </tr>
     `).join('');

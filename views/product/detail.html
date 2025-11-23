@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles del Producto - Greymar</title>
+    <link href="/proyecto-3er-trayecto/public/output.css" rel="stylesheet">
+    <link href="/proyecto-3er-trayecto/public/assets/libs/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/proyecto-3er-trayecto/public/assets/libs/aos.js"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navegación -->
+    <nav class="fixed w-full bg-white/80 backdrop-blur-md shadow-md z-50">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="/proyecto-3er-trayecto" class="inline-block">
+                <img src="/proyecto-3er-trayecto/image/logo-greymar.jpg" alt="Greymar" class="h-10 object-contain">
+            </a>
+            <div class="hidden md:flex space-x-8">
+                <a href="/proyecto-3er-trayecto" class="text-gray-600 hover:text-primary transition-all font-medium px-3 py-2 rounded-lg hover:bg-gray-50">Inicio</a>
+                <a href="/proyecto-3er-trayecto/catalogo" class="text-gray-600 hover:text-primary transition-all font-medium px-3 py-2 rounded-lg hover:bg-gray-50">Catálogo</a>
+                <a href="/proyecto-3er-trayecto/login" class="text-gray-600 hover:text-primary transition-all font-medium px-3 py-2 rounded-lg hover:bg-gray-50">Iniciar Sesión</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Loader -->
+    <div id="loader" class="fixed inset-0 bg-white z-40 flex items-center justify-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary"></div>
+    </div>
+
+    <!-- Contenido del Producto -->
+    <section id="productContent" class="hidden pt-32 pb-16 px-6">
+        <div class="container mx-auto max-w-6xl">
+            <!-- Botón Volver -->
+            <a href="/proyecto-3er-trayecto/catalogo" class="inline-flex items-center text-gray-600 hover:text-primary mb-6 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Volver al catálogo
+            </a>
+
+            <div class="grid md:grid-cols-2 gap-8 bg-white rounded-xl shadow-lg overflow-hidden">
+                <!-- Imagen del Producto -->
+                <div class="relative bg-gray-100" data-aos="fade-right">
+                    <div id="productImageContainer" class="aspect-square flex items-center justify-center">
+                        <i class="fas fa-image text-6xl text-gray-300"></i>
+                    </div>
+                    <div id="stockBadge" class="absolute top-4 right-4"></div>
+                </div>
+
+                <!-- Información del Producto -->
+                <div class="p-8" data-aos="fade-left">
+                    <div id="categoryBadge" class="mb-4"></div>
+                    <h1 id="productName" class="text-3xl md:text-4xl font-bold text-gray-800 mb-4"></h1>
+                    <p id="productDescription" class="text-gray-600 text-lg mb-6 leading-relaxed"></p>
+
+                    <!-- Información de Stock -->
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">Disponibilidad</p>
+                                <div class="flex items-center gap-2">
+                                    <i class="fas fa-box text-gray-600"></i>
+                                    <span id="stockInfo" class="text-xl font-semibold"></span>
+                                </div>
+                            </div>
+                            <div id="stockStatus" class="text-right"></div>
+                        </div>
+                    </div>
+
+                    <!-- Detalles Adicionales -->
+                    <div class="border-t border-gray-200 pt-6 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Detalles del Producto</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-tag text-primary mt-1"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-700">Categoría</p>
+                                    <p id="productCategory" class="text-gray-600"></p>
+                                </div>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <i class="fas fa-info-circle text-primary mt-1"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-700">Estado</p>
+                                    <p id="productState" class="text-gray-600"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button onclick="shareProduct()" 
+                                class="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors font-semibold flex items-center justify-center gap-2">
+                            <i class="fas fa-share-alt"></i>
+                            Compartir
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Productos Relacionados -->
+            <div class="mt-16">
+                <h2 class="text-2xl font-bold mt-6 text-gray-800 mb-6" data-aos="fade-up">Productos Relacionados</h2>
+                <div id="relatedProducts" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    <!-- Se cargarán dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Error Message -->
+    <div id="errorContent" class="hidden min-h-screen flex items-center justify-center px-6">
+        <div class="text-center">
+            <i class="fas fa-exclamation-triangle text-6xl text-red-400 mb-4"></i>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Producto no encontrado</h2>
+            <p class="text-gray-600 mb-6">El producto que buscas no existe o fue eliminado.</p>
+            <a href="/proyecto-3er-trayecto/catalogo" 
+               class="inline-block bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors">
+                Ver catálogo
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 md:py-12">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-8">
+                <div class="text-center md:text-left">
+                    <h5 class="text-lg font-semibold mb-3 md:mb-4">Nuestros Productos</h5>
+                    <ul class="space-y-2 text-gray-400 text-sm md:text-base">
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200 block">Ropa y Textiles</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200 block">Artículos Promocionales</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200 block">Materiales de Impresión</a></li>
+                    </ul>
+                </div>
+                <div class="text-center md:text-left">
+                    <h5 class="text-lg font-semibold mb-3 md:mb-4">Servicios</h5>
+                    <ul class="space-y-2 text-gray-400 text-sm md:text-base">
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200 block">Diseño Personalizado</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200 block">Impresión Digital</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200 block">Bordado Industrial</a></li>
+                    </ul>
+                </div>
+                <div class="text-center md:text-left">
+                    <h5 class="text-lg font-semibold mb-3 md:mb-4">Empresa</h5>
+                    <ul class="space-y-2 text-gray-400 text-sm md:text-base">
+                        <li><a href="/proyecto-3er-trayecto#nosotros" class="hover:text-primary transition-colors duration-200 block">Sobre Nosotros</a></li>
+                        <li><a href="/proyecto-3er-trayecto#mision" class="hover:text-primary transition-colors duration-200 block">Misión</a></li>
+                        <li><a href="/proyecto-3er-trayecto#vision" class="hover:text-primary transition-colors duration-200 block">Visión</a></li>
+                    </ul>
+                </div>
+                <div class="text-center md:text-left max-w-xs mx-auto md:mx-0">
+                    <h5 class="text-lg font-semibold mb-3 md:mb-4">Contáctenos</h5>
+                    <ul class="space-y-2 text-gray-400 text-sm md:text-base">
+                        <li class="flex items-center justify-center md:justify-start gap-2">
+                            <i class="fas fa-phone"></i> +1 234 567 890
+                        </li>
+                        <li class="flex items-center justify-center md:justify-start gap-2">
+                            <i class="fas fa-envelope"></i> info@greymar.com
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <p class="pt-8 border-t border-white/10 text-center text-sm md:text-base">
+                &copy; 2024 Greymar. Todos los derechos reservados.
+            </p>
+        </div>
+    </footer>
+
+    <script src="/proyecto-3er-trayecto/views/product/detail.js"></script>
+</body>
+</html>

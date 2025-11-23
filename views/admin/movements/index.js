@@ -68,6 +68,13 @@ async function loadProducts() {
 
 // Función para abrir el modal de nuevo movimiento
 const openMovementModal = () => {
+    // Reset form and state for creating a new movement
+    const form = document.getElementById('movementForm');
+    if (form) form.reset();
+    const idField = document.getElementById('movementId');
+    if (idField) idField.value = '';
+    const title = document.getElementById('movementModalTitle');
+    if (title) title.textContent = 'Nuevo Movimiento';
     document.getElementById('movementModal').classList.remove('hidden');
 };
 
@@ -153,13 +160,31 @@ const editMovement = async (id) => {
 const saveMovement = async () => {
     const movementId = document.getElementById('movementId').value;
     const isEdit = !!movementId;
-    
+    const productValue = document.getElementById('movementProduct').value;
+    const tipoValue = document.getElementById('movementType').value;
+    const cantidadValue = document.getElementById('movementQuantity').value;
+    const motivoValue = document.getElementById('movementReason').value;
+
+    // Client-side validation to provide clearer feedback
+    if (!productValue) {
+        showNotification('Seleccione un producto', true);
+        return;
+    }
+    if (!cantidadValue || Number(cantidadValue) <= 0) {
+        showNotification('Ingrese una cantidad válida', true);
+        return;
+    }
+    if (!tipoValue) {
+        showNotification('Seleccione un tipo de movimiento', true);
+        return;
+    }
+
     const movementData = {
         id: movementId,
-        product_id: document.getElementById('movementProduct').value,
-        tipo: document.getElementById('movementType').value,
-        cantidad: document.getElementById('movementQuantity').value,
-        motivo: document.getElementById('movementReason').value
+        product_id: productValue,
+        tipo: tipoValue,
+        cantidad: Number(cantidadValue),
+        motivo: motivoValue
     };
 
     try {

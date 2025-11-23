@@ -4,17 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Greymar - Panel de Control</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/proyecto-3er-trayecto/public/output.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        corePlugins: {
-          preflight: true,
-        }
-      };
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/proyecto-3er-trayecto/public/assets/libs/chart.min.js"></script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
     <div id="sidebar"></div>
@@ -100,7 +92,9 @@
                 <div id="categories-grid" class="grid grid-cols-2 gap-4">
                     <!-- Categorías generadas dinámicamente -->
                     <div class="p-4 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer flex items-center justify-center">
-                        <i class="fas fa-plus text-gray-400 dark:text-gray-500"></i>
+                        <svg class="w-6 h-6 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
                     </div>
                 </div>
             </div>
@@ -117,10 +111,9 @@
 
     <script src="/proyecto-3er-trayecto/views/components/sidebar.js"></script>
     <script src="/proyecto-3er-trayecto/views/admin/index.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-   
+    <script src="/proyecto-3er-trayecto/public/assets/libs/html2canvas.min.js"></script>
+    <script src="/proyecto-3er-trayecto/public/assets/libs/jspdf.umd.min.js"></script>
+    <script src="/proyecto-3er-trayecto/public/assets/libs/jspdf.plugin.autotable.min.js"></script>
 
 </body>
 </html>

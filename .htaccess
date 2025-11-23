@@ -36,6 +36,8 @@ RewriteRule ^movimientos/(\d+)$ controllers/MovementController.php?id=$1 [QSA,L]
 # 3. Rutas del Frontend (Vistas)
 # -------------------------------------------------------------------
 RewriteRule ^login$ views/auth/index.html [L]
+RewriteRule ^catalogo$ views/catalog/index.html [L]  # Regla para catálogo público
+RewriteRule ^producto/(\d+)$ views/product/detail.html [L]  # Regla para detalles de producto
 RewriteRule ^admin/users$ views/admin/users/index.html [L]  # Regla específica para users
 RewriteRule ^admin/category$ views/admin/category/index.html [L]  # Regla específica para category
 RewriteRule ^admin/product$ views/admin/product/index.html [L]  # Regla específica para product

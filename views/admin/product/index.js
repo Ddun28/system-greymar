@@ -101,11 +101,11 @@ document.addEventListener('DOMContentLoaded', () => {
             <td class="px-6 py-4 dark:text-white">${product.nombre}</td>
             <td class="px-6 py-4 dark:text-white">${getCategoryName(product.categoria_id)}</td>
             <td class="px-6 py-4 dark:text-white">${product.stock}</td>
-            <td class="px-6 py-4 flex space-x-2">
-                <button onclick="editProduct(${product.id})" class="text-blue-600 hover:text-blue-800 dark:text-blue-400">
+            <td class="px-6 py-4">
+                <button onclick="editProduct(${product.id})" class="text-blue-600 hover:underline">
                     <i class="fas fa-edit"></i>
                 </button>
-                <button onclick="deleteProduct(${product.id})" class="text-red-600 hover:text-red-800 dark:text-red-400">
+                <button onclick="deleteProduct(${product.id})" class="text-red-600 hover:underline ml-3">
                     <i class="fas fa-trash"></i>
                 </button>
             </td>
@@ -173,22 +173,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let deleteProductId = null;
+
     async function deleteProduct(id) {
-        if (confirm('¿Estás seguro de eliminar este producto?')) {
-            try {
-                const response = await fetch(`${apiBaseUrl}/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    await loadProducts();
-                    showNotification('Producto eliminado', 'success');
-                }
-            } catch (error) {
-                showNotification('Error al eliminar producto', 'error');
+        deleteProductId = id;
+        openDeleteModal();
+    }
+
+    function openDeleteModal() {
+        const deleteModal = document.getElementById('deleteModal');
+        if (deleteModal) {
+            deleteModal.classList.remove('hidden');
+        }
+    }
+
+    function closeDeleteModal() {
+        const deleteModal = document.getElementById('deleteModal');
+        if (deleteModal) {
+            deleteModal.classList.add('hidden');
+        }
+        deleteProductId = null;
+    }
+
+    async function confirmDelete() {
+        if (!deleteProductId) return;
+        
+        try {
+            const response = await fetch(`${apiBaseUrl}/${deleteProductId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                await loadProducts();
+                showNotification('Producto eliminado correctamente', 'success');
+            } else {
+                showNotification(result.message || 'Error al eliminar producto', 'error');
             }
+        } catch (error) {
+            showNotification('Error al eliminar producto', 'error');
+        } finally {
+            closeDeleteModal();
         }
     }
 
@@ -209,4 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.saveProduct = saveProduct;
     window.editProduct = editProduct;
     window.deleteProduct = deleteProduct;
+    window.closeDeleteModal = closeDeleteModal;
+    window.confirmDeleteProduct = confirmDelete;
 });

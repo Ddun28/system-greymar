@@ -4,7 +4,8 @@ require_once '../config/database.php';
 class Product {
     private $db;
     private $table = 'productos';
-    private $movementsTable = 'movimientos';
+    // Use the canonical inventory movements table
+    private $movementsTable = 'movimientos_inventario';
 
     public $id;
     public $nombre;

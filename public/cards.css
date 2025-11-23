@@ -1,0 +1,212 @@
+/* Native card styles to override Tailwind for product cards on homepage
+   Loaded after output.css so it takes precedence by cascade. This file
+   targets the featured products grid only and applies compact, focused
+   styles for the homepage cards (does not touch the catalog grid).
+*/
+#featuredProductsGrid .native-card, #productsGrid .native-card{
+  border-radius:12px !important;
+  overflow:hidden !important;
+  box-shadow: 0 8px 20px rgba(2,6,23,0.06) !important;
+  display:flex;
+  flex-direction:column;
+  background:#fff !important;
+}
+#featuredProductsGrid .native-card:hover, #productsGrid .native-card:hover{
+  transform: translateY(-6px);
+  transition: transform 220ms ease;
+}
+#featuredProductsGrid .native-card-media, #productsGrid .native-card-media{
+  height:260px;
+  background:#f3f4f6 !important;
+  overflow:hidden !important;
+}
+#featuredProductsGrid .native-card-media img, #productsGrid .native-card-media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  transition: transform 300ms ease;
+}
+#featuredProductsGrid .native-card-media:hover img, #productsGrid .native-card-media:hover img{
+  transform: scale(1.05);
+}
+#featuredProductsGrid .native-card-body, #productsGrid .native-card-body{
+  padding:18px !important;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+#featuredProductsGrid .native-card-body h3, #productsGrid .native-card-body h3{
+  font-size:16px !important;
+  margin:0 !important;
+  color:#111827 !important;
+}
+#featuredProductsGrid .native-card-body p, #productsGrid .native-card-body p{
+  color:#6b7280 !important;
+  margin:0 !important;
+  font-size:14px !important;
+}
+#featuredProductsGrid .native-card-body .card-footer, #productsGrid .native-card-body .card-footer{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  padding-top:12px !important;
+  border-top:1px solid #f3f4f6 !important;
+}
+#featuredProductsGrid .native-card .badge-available, #productsGrid .native-card .badge-available{
+  position:absolute;right:12px;top:12px;background:#10B981;color:#fff;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:600;box-shadow:0 6px 14px rgba(16,185,129,0.12)
+}
+#featuredProductsGrid .native-card .badge-soldout, #productsGrid .native-card .badge-soldout{
+  position:absolute;right:12px;top:12px;background:#EF4444;color:#fff;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:600;box-shadow:0 6px 14px rgba(239,68,68,0.12)
+}
+@media(max-width:900px){
+  #featuredProductsGrid .native-card-media, #productsGrid .native-card-media{height:180px}
+}
+@media(max-width:520px){
+  #featuredProductsGrid .native-card-media, #productsGrid .native-card-media{height:160px}
+}
+
+/* E-commerce minimal card enhancements for the catalog grid */
+#productsGrid .native-card{
+  border-radius:12px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  background: #ffffff !important;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+  position:relative;
+}
+#productsGrid .native-card:hover{
+  transform: translateY(-8px);
+  box-shadow: 0 14px 30px rgba(2,6,23,0.10) !important;
+}
+#productsGrid .native-card-media{
+  height:220px;
+  background:#f8fafc !important;
+  display:block;
+  overflow:hidden !important;
+}
+#productsGrid .native-card-media img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+#productsGrid .native-card-body{
+  padding:16px !important;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-height:140px;
+}
+#productsGrid .native-card-body h3{
+  font-size:15px !important;
+  margin:0 !important;
+  color:#0f172a !important;
+}
+#productsGrid .native-card-body p{
+  color:#6b7280 !important;
+  margin:0 !important;
+  font-size:13px !important;
+}
+#productsGrid .native-card-meta{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:8px;
+}
+#productsGrid .native-card-price{
+  font-weight:700 !important;
+  color:#0b5cff !important;
+  font-size:16px !important;
+}
+#productsGrid .native-card-actions{
+  display:flex !important;
+  gap:8px !important;
+  align-items:center !important;
+  justify-content:flex-end !important;
+}
+#productsGrid .native-card .btn-primary{
+  background: linear-gradient(90deg,#0b5cff,#6c8cff) !important;
+  color:#fff !important;
+  padding:8px 12px !important;
+  border-radius:8px !important;
+  font-weight:600 !important;
+  font-size:14px !important;
+  box-shadow: 0 6px 18px rgba(11,92,255,0.12) !important;
+}
+#productsGrid .native-card .btn-outline{
+  background:transparent !important;
+  border:1px solid #e6e9ef !important;
+  color:#374151 !important;
+  padding:7px 10px !important;
+  border-radius:8px !important;
+  font-size:13px !important;
+}
+@media(max-width:900px){
+  #productsGrid .native-card-media{height:180px}
+}
+@media(max-width:520px){
+  #productsGrid .native-card-media{height:160px}
+}
+
+/* Hero title animated colors and logo alignment */
+.title-animated{
+  display:inline-block;
+  background:linear-gradient(90deg,#0b5cff,#7c3aed,#06b6d4,#f97316);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color:transparent;
+  animation: colorShift 5s linear infinite;
+}
+
+@keyframes colorShift{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+/* small hero logo when shown next to title */
+.hero-logo{
+  height:56px;
+}
+
+/* Homepage hero animations */
+.hero-container{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap}
+.hero-logo-float{
+  width:84px;
+  height:auto;
+  border-radius:12px;
+  box-shadow:0 8px 30px rgba(2,6,23,0.12);
+  transform-origin:center;
+  animation: floatY 4s ease-in-out infinite;
+}
+
+.home-title-animated{
+  display:inline-block;
+  font-weight:800;
+  background:linear-gradient(90deg,#ff6b6b,#7c3aed,#06b6d4,#0b5cff);
+  background-size:300% 100%;
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  animation: gradientShift 6s ease infinite;
+  text-shadow: 0 6px 18px rgba(11,92,255,0.08);
+}
+
+@keyframes floatY{
+  0%{transform:translateY(0)}
+  50%{transform:translateY(-8px) rotate(-1deg)}
+  100%{transform:translateY(0)}
+}
+
+@keyframes gradientShift{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+/* subtle glow when hero is hovered (desktop) */
+@media (hover: hover) and (min-width: 768px){
+  .hero-container:hover .home-title-animated{filter: drop-shadow(0 12px 30px rgba(124,58,237,0.08));}
+  .hero-container:hover .hero-logo-float{transform:translateY(-6px) rotate(-0.8deg);}
+}

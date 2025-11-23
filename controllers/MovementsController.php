@@ -51,8 +51,9 @@ class MovementController {
         try {
             // Obtener producto
             $this->productModel->id = $input['product_id'];
-            $product = $this->productModel->read()->fetch(PDO::FETCH_ASSOC);
-            
+            $productStmt = $this->productModel->read();
+            $product = $productStmt->fetch(PDO::FETCH_ASSOC);
+
             if (!$product) {
                 throw new Exception("Producto no encontrado");
             }
@@ -62,23 +63,21 @@ class MovementController {
                 throw new Exception("Stock insuficiente");
             }
 
-            // Registrar movimiento
-            $this->movementModel->producto_id = $input['product_id'];
-            $this->movementModel->tipo = $input['tipo'];
-            $this->movementModel->cantidad = $input['cantidad'];
-            $this->movementModel->motivo = $input['motivo'] ?? null;
+            // Use Product::registerMovement to update stock and insert movimiento atomically
+            $this->productModel->id = $input['product_id'];
+            // set current stock so registerMovement can compute newStock
+            $this->productModel->stock = (int)$product['stock'];
 
-            $this->productModel->beginTransaction();
-            $this->movementModel->create();
-            $this->productModel->commit();
+            $this->productModel->registerMovement($input['tipo'], (int)$input['cantidad'], $input['motivo'] ?? null);
 
             echo json_encode([
                 'status' => 'success',
                 'message' => 'Movimiento registrado'
             ]);
-            
+
         } catch (Exception $e) {
-            $this->productModel->rollBack();
+            // registerMovement handles its own rollback; ensure any open rollback
+            try { $this->productModel->rollBack(); } catch(Exception $ex) {}
             $this->sendError($e->getMessage(), 400);
         }
     }
@@ -100,31 +99,44 @@ class MovementController {
             throw new Exception("Movimiento no encontrado");
         }
 
-        // Validar stock si es salida
-        if ($input['tipo'] === 'salida') {
-            $this->productModel->id = $existing['producto_id'];
-            $product = $this->productModel->read()->fetch(PDO::FETCH_ASSOC);
-            
-            $stockDifference = $input['cantidad'] - $existing['cantidad'];
-            if (($product['stock'] + $stockDifference) < 0) {
-                throw new Exception("Stock insuficiente");
-            }
-        }
+        // Obtener producto actual
+        $this->productModel->id = $existing['producto_id'];
+        $productStmt = $this->productModel->read();
+        $product = $productStmt->fetch(PDO::FETCH_ASSOC);
+        if (!$product) throw new Exception('Producto asociado no encontrado');
 
-        // Actualizar movimiento
+        // Calculate stock adjustment: revert existing effect and apply new effect
+        // existing effect: +cantidad for entrada, -cantidad for salida
+        $oldEffect = ($existing['tipo'] === 'entrada') ? (int)$existing['cantidad'] : -((int)$existing['cantidad']);
+        $newEffect = ($input['tipo'] === 'entrada') ? (int)$input['cantidad'] : -((int)$input['cantidad']);
+
+        $newStock = (int)$product['stock'] - $oldEffect + $newEffect;
+        if ($newStock < 0) throw new Exception('Stock insuficiente para aplicar los cambios');
+
+        // Perform update in transaction: update product stock and movement record
+        $this->productModel->beginTransaction();
+
+        // Update product stock
+        $this->productModel->stock = $newStock;
+        $this->productModel->id = $product['id'];
+        $this->productModel->update();
+
+        // Update movement
         $this->movementModel->id = $input['id'];
         $this->movementModel->tipo = $input['tipo'];
-        $this->movementModel->cantidad = $input['cantidad'];
+        $this->movementModel->cantidad = (int)$input['cantidad'];
         $this->movementModel->motivo = $input['motivo'] ?? null;
-        
         $this->movementModel->update();
-        
+
+        $this->productModel->commit();
+
         echo json_encode([
             'status' => 'success',
             'message' => 'Movimiento actualizado'
         ]);
-        
+
     } catch (Exception $e) {
+        try { $this->productModel->rollBack(); } catch(Exception $ex) {}
         $this->sendError($e->getMessage(), 400);
     }
 }
@@ -148,10 +160,36 @@ private function getMovements($id) {
 
     private function deleteMovement($id) {
         try {
+            // Find movement to reverse its effect
+            $movement = $this->movementModel->getById($id);
+            if (!$movement) throw new Exception('Movimiento no encontrado');
+
+            // Get product
+            $this->productModel->id = $movement['producto_id'];
+            $productStmt = $this->productModel->read();
+            $product = $productStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$product) throw new Exception('Producto asociado no encontrado');
+
+            // Compute reversed stock
+            $effect = ($movement['tipo'] === 'entrada') ? (int)$movement['cantidad'] : -((int)$movement['cantidad']);
+            // To revert, subtract effect
+            $revertedStock = (int)$product['stock'] - $effect;
+            if ($revertedStock < 0) throw new Exception('No se puede eliminar movimiento: dejaría stock negativo');
+
+            // Transaction: update product stock then delete movement
+            $this->productModel->beginTransaction();
+            $this->productModel->stock = $revertedStock;
+            $this->productModel->id = $product['id'];
+            $this->productModel->update();
+
             $this->movementModel->id = $id;
             $this->movementModel->delete();
+
+            $this->productModel->commit();
+
             echo json_encode(['status' => 'success', 'message' => 'Movimiento eliminado']);
         } catch (Exception $e) {
+            try { $this->productModel->rollBack(); } catch(Exception $ex) {}
             $this->sendError($e->getMessage(), 400);
         }
     }

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Productos - Greymar</title>
+    <link href="/proyecto-3er-trayecto/public/output.css" rel="stylesheet">
+    <link href="/proyecto-3er-trayecto/public/cards.css" rel="stylesheet">
+    <link href="/proyecto-3er-trayecto/public/assets/libs/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/proyecto-3er-trayecto/public/assets/libs/aos.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Navegación -->
+    <nav class="sticky top-0 w-full bg-white/80 backdrop-blur-md shadow-md z-50">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <a href="/proyecto-3er-trayecto" class="inline-block">
+                <img src="/proyecto-3er-trayecto/image/logo-greymar.jpg" alt="Greymar" class="h-10 object-contain">
+            </a>
+            <div class="hidden md:flex space-x-8">
+                <a href="/proyecto-3er-trayecto" class="text-gray-600 hover:text-primary transition-all font-medium px-3 py-2 rounded-lg hover:bg-gray-50">Inicio</a>
+                <a href="/proyecto-3er-trayecto/catalogo" class="text-primary font-medium px-3 py-2 rounded-lg bg-gray-50">Catálogo</a>
+                <a href="/proyecto-3er-trayecto/login" class="text-gray-600 hover:text-primary transition-all font-medium px-3 py-2 rounded-lg hover:bg-gray-50">Iniciar Sesión</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero del Catálogo -->
+    <main class="flex-1">
+    <section class="pt-20 pb-8 px-6 bg-gradient-to-br mt-6 from-primary/10 to-secondary/10">
+        <div class="container mx-auto text-center">
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+                <img src="/proyecto-3er-trayecto/image/logo-greymar.jpg" alt="Greymar" class="h-14 w-auto hidden md:block" />
+                <h2 class="text-3xl md:text-4xl mt-4 font-bold text-gray-800 mb-3" data-aos="fade-up">Nuestro <span class="title-animated">Catálogo</span></h2>
+            </div>
+            <p class="text-lg text-gray-600 mb-6 mt-6" data-aos="fade-up" data-aos-delay="100">
+                Explora nuestra amplia selección de productos
+            </p>
+            
+            <!-- Filtros -->
+            <div class="max-w-3xl mx-auto mt-6" data-aos="fade-up" data-aos-delay="200">
+                <div class="bg-white shadow-sm rounded-lg px-4 py-3 flex flex-col md:flex-row items-center gap-3">
+                    <div class="w-full md:w-56">
+                        <select id="categoryFilter" class="w-full px-4 py-2.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent bg-white">
+                            <option value="">Todas las categorías</option>
+                        </select>
+                    </div>
+                    <div class="w-full md:flex-1">
+                        <input type="text" id="searchInput" placeholder="Buscar productos..." 
+                               class="w-full px-4 py-2.5 border border-gray-200 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <button id="clearFilters" class="mt-2 md:mt-0 inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-sm rounded-md hover:bg-gray-200">Limpiar</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Grid de Productos -->
+    <section class="py-10 px-4 mt-6 mb-6 md:px-6 min-h-[60vh]">
+        <div class="container mx-auto max-w-7xl">
+            <!-- Loader -->
+            <div id="loader" class="flex justify-center items-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+
+            <!-- Grid de Productos -->
+            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6" style="display: none;">
+                <!-- Los productos se cargarán dinámicamente -->
+            </div>
+
+            <!-- Paginación -->
+            <div id="pagination" class="mt-8 flex items-center justify-center gap-2"></div>
+
+            <!-- Mensaje sin resultados -->
+            <div id="noResults" class="text-center py-20" style="display: none;">
+                <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+                <p class="text-xl text-gray-500">No se encontraron productos</p>
+            </div>
+        </div>
+    </section>
+
+    </main>
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 md:py-12">
+        <div class="container mx-auto px-4 md:px-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8 mb-8">
+                <!-- Columna 1 -->
+                <div class="text-center md:text-left">
+                    <h5 class="text-lg font-semibold mb-3 md:mb-4">Nuestros Productos</h5>
+                    <ul class="space-y-2 text-gray-400 text-sm md:text-base">
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200 block">Ropa y Textiles</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200 block">Artículos Promocionales</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200 block">Materiales de Impresión</a></li>
+                    </ul>
+                </div>
+
+                <!-- Columna 2 -->
+                <div class="text-center md:text-left">
+                    <h5 class="text-lg font-semibold mb-3 md:mb-4">Servicios</h5>
+                    <ul class="space-y-2 text-gray-400 text-sm md:text-base">
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200 block">Diseño Personalizado</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200 block">Impresión Digital</a></li>
+                        <li><a href="#" class="hover:text-primary transition-colors duration-200 block">Bordado Industrial</a></li>
+                    </ul>
+                </div>
+
+                <!-- Columna 3 -->
+                <div class="text-center md:text-left">
+                    <h5 class="text-lg font-semibold mb-3 md:mb-4">Empresa</h5>
+                    <ul class="space-y-2 text-gray-400 text-sm md:text-base">
+                        <li><a href="/proyecto-3er-trayecto#nosotros" class="hover:text-primary transition-colors duration-200 block">Sobre Nosotros</a></li>
+                        <li><a href="/proyecto-3er-trayecto#mision" class="hover:text-primary transition-colors duration-200 block">Misión</a></li>
+                        <li><a href="/proyecto-3er-trayecto#vision" class="hover:text-primary transition-colors duration-200 block">Visión</a></li>
+                    </ul>
+                </div>
+
+                <!-- Columna 4 -->
+                <div class="text-center md:text-left max-w-xs mx-auto md:mx-0">
+                    <h5 class="text-lg font-semibold mb-3 md:mb-4">Contáctenos</h5>
+                    <ul class="space-y-2 text-gray-400 text-sm md:text-base">
+                        <li class="flex items-center justify-center md:justify-start gap-2">
+                            <i class="fas fa-phone"></i> +1 234 567 890
+                        </li>
+                        <li class="flex items-center justify-center md:justify-start gap-2">
+                            <i class="fas fa-envelope"></i> info@greymar.com
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <p class="pt-8 border-t border-white/10 text-center text-sm md:text-base">
+                &copy; 2024 Greymar. Todos los derechos reservados.
+            </p>
+        </div>
+    </footer>
+
+    <script src="/proyecto-3er-trayecto/views/catalog/index.js"></script>
+</body>
+</html>
