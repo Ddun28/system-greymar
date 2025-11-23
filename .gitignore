@@ -1,1 +1,5 @@
 node_modules
+# Ignore local tailwind executable (avoid committing large binary)
+/tailwindcss.exe
+tailwindcss.exe
+public/assets/libs/tailwindcss.exe
