@@ -1,0 +1,56 @@
+/* Minimal dark overrides to simulate Tailwind class-based dark when compiled with media queries */
+.dark body,
+.dark .bg-white,
+.dark .bg-gray-50,
+.dark .bg-gray-100,
+.dark .bg-gray-200 {
+  background-color: #0f172a !important; /* gray-900 */
+  color: #e5e7eb !important; /* gray-200 */
+}
+
+.dark .text-gray-800,
+.dark .text-gray-900,
+.dark .text-gray-700 {
+  color: #e5e7eb !important;
+}
+
+.dark .text-gray-500,
+.dark .text-gray-600,
+.dark .text-gray-400 {
+  color: #9ca3af !important;
+}
+
+.dark .border-gray-200,
+.dark .divide-gray-200 {
+  border-color: #374151 !important; /* gray-700 */
+}
+
+.dark .dark\:bg-gray-800, /* safety */
+.dark .bg-gray-800 {
+  background-color: #111827 !important; /* gray-800 */
+}
+
+.dark .bg-blue-600 { background-color: #2563eb !important; }
+.dark .bg-green-600 { background-color: #16a34a !important; }
+.dark .bg-red-600 { background-color: #dc2626 !important; }
+
+/* Table headers and cards */
+.dark th,
+.dark .thead-dark,
+.dark .table-header,
+.dark .bg-gray-50 th {
+  background-color: #111827 !important;
+  color: #f9fafb !important;
+}
+
+/* Modals and panels */
+.dark .bg-white, .dark .bg-gray-50, .dark .bg-gray-100 { background-color: #0b1220 !important; }
+
+/* Buttons text contrast */
+.dark .text-blue-600 { color: #93c5fd !important; }
+
+/* Small utility fixes */
+.dark .rounded-lg { box-shadow: none !important; }
+
+/* Ensure links and icons visible */
+.dark a, .dark i { color: #e5e7eb !important; }

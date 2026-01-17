@@ -24,6 +24,29 @@ const createSidebar = () => {
 
         <!-- Contenedor Derecha -->
         <div class="flex items-center gap-4">
+            <!-- Campanita de Alertas Stock -->
+            <div class="relative">
+                <button id="alertsToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 relative">
+                    <svg class="w-6 h-6 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <span id="alertsBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">0</span>
+                </button>
+                
+                <!-- Dropdown de Alertas -->
+                <div id="alertsDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-700 z-50 max-h-96 overflow-y-auto">
+                    <div class="p-3 border-b dark:border-gray-700">
+                        <h4 class="font-semibold text-gray-800 dark:text-gray-200">
+                            <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>
+                            Alertas de Stock
+                        </h4>
+                    </div>
+                    <div id="alertsList" class="divide-y dark:divide-gray-700">
+                        <!-- Alertas se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Dark Mode Toggle -->
             <button id="themeToggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
                 <svg id="sunIcon" class="w-6 h-6 text-yellow-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,6 +116,15 @@ const createSidebar = () => {
                 Movimientos
             </a>
 
+            <!-- Auditoría -->
+            <a href="/proyecto-3er-trayecto/admin/audit" class="flex items-center px-6 py-3 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-all ${currentPath === '/admin/audit' ? 'bg-gray-200 dark:bg-gray-700' : ''}">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                </svg>
+                Auditoría
+            </a>
+
             <!-- Cerrar Sesión Mobile -->
             <a href="#" id="mobileLogout" class="md:hidden flex items-center px-6 py-3 text-red-600 hover:bg-red-50 transition-all mt-4 border-t dark:border-gray-700">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,6 +184,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Toggle Dark Mode
     const toggleTheme = () => {
         document.documentElement.classList.toggle('dark');
+        // also toggle on body to be robust if some selectors rely on body
+        if (document.body) document.body.classList.toggle('dark');
         sunIcon.classList.toggle('hidden');
         moonIcon.classList.toggle('hidden');
         localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
@@ -210,6 +244,81 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('confirmLogout')?.addEventListener('click', handleLogout);
     document.getElementById('cancelLogout')?.addEventListener('click', hideLogoutModal);
 
+    // ===== ALERTAS DE STOCK =====
+    const alertsToggle = document.getElementById('alertsToggle');
+    const alertsDropdown = document.getElementById('alertsDropdown');
+    const alertsBadge = document.getElementById('alertsBadge');
+    const alertsList = document.getElementById('alertsList');
+
+    // Toggle dropdown de alertas
+    alertsToggle?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        alertsDropdown?.classList.toggle('hidden');
+    });
+
+    // Cerrar dropdown al hacer clic fuera
+    document.addEventListener('click', (e) => {
+        if (!alertsDropdown?.contains(e.target) && !alertsToggle?.contains(e.target)) {
+            alertsDropdown?.classList.add('hidden');
+        }
+    });
+
+    // Cargar alertas de stock
+    const loadStockAlerts = async () => {
+        try {
+            const response = await fetch('/proyecto-3er-trayecto/products/alerts');
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                const alerts = result.data || [];
+                const count = result.count || 0;
+
+                // Actualizar badge
+                if (count > 0) {
+                    alertsBadge.textContent = count > 99 ? '99+' : count;
+                    alertsBadge.classList.remove('hidden');
+                } else {
+                    alertsBadge.classList.add('hidden');
+                }
+
+                // Renderizar lista de alertas
+                if (alerts.length === 0) {
+                    alertsList.innerHTML = `
+                        <div class="p-4 text-center text-gray-500 dark:text-gray-400">
+                            <i class="fas fa-check-circle text-green-500 text-2xl mb-2"></i>
+                            <p>No hay alertas de stock</p>
+                        </div>
+                    `;
+                } else {
+                    alertsList.innerHTML = alerts.map(alert => `
+                        <a href="/proyecto-3er-trayecto/admin/product" class="block p-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-medium text-gray-800 dark:text-gray-200 text-sm">${alert.nombre}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">${alert.categoria}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="px-2 py-1 rounded-full text-xs font-semibold ${alert.stock === 0 ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'}">
+                                        ${alert.stock === 0 ? 'Sin stock' : `${alert.stock}/${alert.stock_minimo}`}
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                    `).join('');
+                }
+            }
+        } catch (error) {
+            console.error('Error al cargar alertas:', error);
+        }
+    };
+
+    // Cargar alertas al iniciar (solo si estamos autenticados)
+    if (localStorage.getItem('authData')) {
+        loadStockAlerts();
+        // Actualizar cada 60 segundos
+        setInterval(loadStockAlerts, 60000);
+    }
+
     // Cargar tema guardado
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -217,10 +326,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if(initialTheme === 'dark') {
         document.documentElement.classList.add('dark');
+        if (document.body) document.body.classList.add('dark');
         sunIcon.classList.remove('hidden');
         moonIcon.classList.add('hidden');
     } else {
         document.documentElement.classList.remove('dark');
+        if (document.body) document.body.classList.remove('dark');
         sunIcon.classList.add('hidden');
         moonIcon.classList.remove('hidden');
     }

@@ -53,7 +53,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify(formData)
             });
 
-            const data = await response.json();
+            let data;
+            const contentType = response.headers.get('content-type') || '';
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                const message = text.replace(/<[^>]*>/g, '').trim() || 'Error del servidor';
+                throw new Error(message);
+            }
 
             if (!response.ok) {
                 throw new Error(data.message || 'Error en autenticación');

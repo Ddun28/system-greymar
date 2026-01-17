@@ -36,11 +36,31 @@ async function loadProductDetail(productId) {
         const productResult = await productResponse.json();
         const categoriesResult = await categoriesResponse.json();
 
+            let exchangeRate = null;
+            try {
+                const raw = localStorage.getItem('exchangeRateData');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (parsed && parsed.rate && parsed.fetchedAt && (Date.now() - parsed.fetchedAt) < 24 * 60 * 60 * 1000) {
+                        exchangeRate = parseFloat(parsed.rate) || null;
+                    }
+                }
+            } catch (e) {
+                console.warn('Error leyendo cache de tasa (detail):', e);
+                exchangeRate = null;
+            }
+
         if (productResult.status === 'success' && productResult.data) {
             const product = productResult.data;
             const categories = categoriesResult.status === 'success' ? categoriesResult.data : [];
             
             renderProductDetail(product, categories);
+            renderProductPrice(product, exchangeRate);
+            // Escuchar actualizaciones forzadas de la tasa para actualizar precio
+            window.addEventListener('exchangeRateUpdated', (ev) => {
+                const newRate = ev && ev.detail && ev.detail.rate ? ev.detail.rate : null;
+                renderProductPrice(product, newRate);
+            }, { once: false });
             await loadRelatedProducts(product.categoria_id, productId, categories);
             
             hideLoader();
@@ -51,6 +71,14 @@ async function loadProductDetail(productId) {
         console.error('Error al cargar producto:', error);
         showError();
     }
+}
+
+function renderProductPrice(product, exchangeRate) {
+    const priceVal = parseFloat(product.precio ?? product.precio_venta ?? 0) || 0;
+    const priceBs = exchangeRate ? (priceVal * exchangeRate).toFixed(2) : null;
+    const el = document.getElementById('productPrice');
+    if (!el) return;
+    el.innerHTML = priceBs ? `$${priceVal.toFixed(2)} <span class="text-sm text-gray-500">(Bs. ${priceBs})</span>` : `$${priceVal.toFixed(2)}`;
 }
 
 function renderProductDetail(product, categories) {

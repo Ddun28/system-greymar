@@ -97,6 +97,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderCategories(categories) {
         elements.list.innerHTML = '';
+        if (!categories || categories.length === 0) {
+            elements.list.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500 py-6">No hay registros</td></tr>';
+            return;
+        }
+
         const fragment = document.createDocumentFragment();
         
         categories.forEach(category => {

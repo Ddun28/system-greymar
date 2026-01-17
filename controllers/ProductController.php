@@ -27,6 +27,10 @@ class ProductController {
     public function handleRequest() {
         try {
             $method = $_SERVER['REQUEST_METHOD'];
+            // Soporta override de método por clientes que envían multipart/form-data (ej. X-HTTP-Method-Override: PUT)
+            if (!empty($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
+                $method = $_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'];
+            }
             $id = $_GET['id'] ?? null;
             $action = $_GET['action'] ?? null;
 
@@ -37,6 +41,16 @@ class ProductController {
 
             if ($action === 'movimientos' && $method === 'GET') {
                 $this->getMovements($id);
+                return;
+            }
+
+            if ($action === 'low-stock' && $method === 'GET') {
+                $this->getLowStockProducts();
+                return;
+            }
+
+            if ($action === 'alerts' && $method === 'GET') {
+                $this->getStockAlerts();
                 return;
             }
 
@@ -143,19 +157,67 @@ class ProductController {
     }
 
     private function getInput() {
-        // Para formularios multipart (con archivos)
-        if (!empty($_FILES)) {
-            return [
+        // Para formularios multipart (con o sin archivos) — leer $_POST cuando exista
+        if (!empty($_FILES) || !empty($_POST)) {
+            $data = [
                 'nombre' => $_POST['nombre'] ?? null,
                 'descripcion' => $_POST['descripcion'] ?? null,
                 'categoria_id' => $_POST['categoria_id'] ?? null,
                 'stock' => $_POST['stock'] ?? 0,
-                'imagen' => !empty($_FILES['imagen']) ? $this->handleImageUpload($_FILES['imagen']) : null
+                'precio' => $_POST['precio'] ?? 0,
+                'stock_minimo' => $_POST['stock_minimo'] ?? 5,
             ];
+
+            // Priorizar archivo subido; si no hay, aceptar imagen_actual (referencia URL)
+            if (!empty($_FILES['imagen'])) {
+                $data['imagen'] = $this->handleImageUpload($_FILES['imagen']);
+            } elseif (!empty($_POST['imagen_actual'])) {
+                $data['imagen'] = $_POST['imagen_actual'];
+            } else {
+                $data['imagen'] = null;
+            }
+
+            return $data;
         }
-        
+
         // Para JSON
         return json_decode(file_get_contents('php://input'), true) ?? [];
+    }
+
+    private function getLowStockProducts() {
+        try {
+            $products = $this->model->getLowStockProducts();
+            echo json_encode(['status' => 'success', 'data' => $products]);
+        } catch (Exception $e) {
+            $this->sendError($e->getMessage(), 400);
+        }
+    }
+
+    private function getStockAlerts() {
+        try {
+            $products = $this->model->getLowStockProducts();
+            $alerts = array_map(function($p) {
+                return [
+                    'id' => $p['id'],
+                    'nombre' => $p['nombre'],
+                    'stock' => $p['stock'],
+                    'stock_minimo' => $p['stock_minimo'],
+                    'diferencia' => $p['stock_minimo'] - $p['stock'],
+                    'categoria' => $p['categoria'] ?? 'Sin categoría',
+                    'mensaje' => $p['stock'] == 0 
+                        ? "¡Sin stock!" 
+                        : "Stock bajo: {$p['stock']}/{$p['stock_minimo']}"
+                ];
+            }, $products);
+            
+            echo json_encode([
+                'status' => 'success',
+                'count' => count($alerts),
+                'data' => $alerts
+            ]);
+        } catch (Exception $e) {
+            $this->sendError($e->getMessage(), 400);
+        }
     }
 
     private function handleImageUpload($file) {
@@ -229,6 +291,9 @@ class ProductController {
             $this->model->imagen = $data['imagen'] ?? null;
             $this->model->categoria_id = $data['categoria_id'];
             $this->model->stock = $data['stock'] ?? 0;
+            $this->model->precio = $data['precio'] ?? 0;
+            $this->model->stock_minimo = $data['stock_minimo'] ?? 5;
+            $this->model->creado_por = $this->getCurrentUserId();
 
             $id = $this->model->create();
             
@@ -257,6 +322,9 @@ class ProductController {
             $this->model->imagen = $data['imagen'] ?? null;
             $this->model->categoria_id = $data['categoria_id'];
             $this->model->stock = $data['stock'] ?? 0;
+            $this->model->precio = $data['precio'] ?? 0;
+            $this->model->stock_minimo = $data['stock_minimo'] ?? 5;
+            $this->model->actualizado_por = $this->getCurrentUserId();
 
             $this->model->update();
             
@@ -268,6 +336,21 @@ class ProductController {
         } catch (Exception $e) {
             $this->sendError($e->getMessage(), 400);
         }
+    }
+
+    private function getCurrentUserId() {
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        if (preg_match('/Bearer\s+(.*)$/i', $authHeader, $matches)) {
+            try {
+                require_once '../vendor/firebase/php-jwt/src/JWT.php';
+                require_once '../vendor/firebase/php-jwt/src/Key.php';
+                $decoded = \Firebase\JWT\JWT::decode($matches[1], new \Firebase\JWT\Key('greymar_secret_key_2024', 'HS256'));
+                return $decoded->user_id ?? null;
+            } catch (Exception $e) {
+                return null;
+            }
+        }
+        return null;
     }
 
     private function deleteProduct($id) {

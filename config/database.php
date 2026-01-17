@@ -20,7 +20,15 @@ class Database {
         try {
             $this->pdo = new PDO($dsn, $user, $pass, $options);
         } catch (\PDOException $e) {
-            throw new \PDOException($e->getMessage(), (int)$e->getCode());
+            http_response_code(500);
+            header('Content-Type: application/json');
+            echo json_encode([
+                'error' => true,
+                'message' => 'Error de conexión a la base de datos'
+            ]);
+            // Opcional: registrar el error en el log en lugar de mostrar detalles en producción
+            error_log('Database connection error: ' . $e->getMessage());
+            exit;
         }
     }
 

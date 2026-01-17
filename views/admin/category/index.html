@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Control</title>
+    <script>
+        (function(){
+            try{
+                var saved = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if(saved === 'dark' || (!saved && prefersDark)) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+            }catch(e){}
+        })();
+    </script>
     <link rel="stylesheet" href="/proyecto-3er-trayecto/public/output.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="/proyecto-3er-trayecto/public/assets/libs/chart.min.js"></script>

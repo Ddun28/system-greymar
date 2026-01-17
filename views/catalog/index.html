@@ -71,10 +71,13 @@
             <!-- Paginación -->
             <div id="pagination" class="mt-8 flex items-center justify-center gap-2"></div>
 
-            <!-- Mensaje sin resultados -->
+            <!-- Mensaje sin resultados / errores -->
             <div id="noResults" class="text-center py-20" style="display: none;">
-                <i class="fas fa-search text-6xl text-gray-300 mb-4"></i>
-                <p class="text-xl text-gray-500">No se encontraron productos</p>
+                <i id="noResultsIcon" class="fas fa-search text-6xl text-gray-300 mb-4"></i>
+                <p id="noResultsText" class="text-xl text-gray-500">No se encontraron productos</p>
+                <div id="noResultActions" class="mt-6">
+                    <button id="retryLoad" class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700" style="display: none;">Reintentar</button>
+                </div>
             </div>
         </div>
     </section>

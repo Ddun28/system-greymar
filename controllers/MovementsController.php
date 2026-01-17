@@ -93,6 +93,11 @@ class MovementController {
     }
 
     try {
+        // Verificar que sea el último movimiento del producto
+        if (!$this->movementModel->isLastMovementForProduct($input['id'])) {
+            throw new Exception("Solo se puede editar el último movimiento de este producto");
+        }
+
         // Obtener movimiento existente
         $existing = $this->movementModel->getById($input['id']);
         if (!$existing) {
@@ -119,6 +124,12 @@ class MovementController {
         // Update product stock
         $this->productModel->stock = $newStock;
         $this->productModel->id = $product['id'];
+        $this->productModel->nombre = $product['nombre'];
+        $this->productModel->categoria_id = $product['categoria_id'];
+        $this->productModel->descripcion = $product['descripcion'];
+        $this->productModel->imagen = $product['imagen'];
+        $this->productModel->precio = $product['precio'] ?? 0;
+        $this->productModel->stock_minimo = $product['stock_minimo'] ?? 5;
         $this->productModel->update();
 
         // Update movement
@@ -147,10 +158,20 @@ private function getMovements($id) {
         if ($id) {
             // Obtener movimiento específico
             $movement = $this->movementModel->getById($id);
+            if ($movement) {
+                // Agregar información de si es editable
+                $movement['is_editable'] = $this->movementModel->isLastMovementForProduct($id);
+            }
             echo json_encode(['status' => 'success', 'data' => $movement]);
         } else {
-            // Obtener todos los movimientos
-            $movements = $this->movementModel->getRecent(10);
+            // Obtener todos los movimientos con info de editabilidad
+            $movements = $this->movementModel->getRecent(50);
+            
+            // Para cada movimiento, verificar si es el último de su producto
+            foreach ($movements as &$mov) {
+                $mov['is_editable'] = $this->movementModel->isLastMovementForProduct($mov['id']);
+            }
+            
             echo json_encode(['status' => 'success', 'data' => $movements]);
         }
     } catch (Exception $e) {
@@ -180,6 +201,13 @@ private function getMovements($id) {
             $this->productModel->beginTransaction();
             $this->productModel->stock = $revertedStock;
             $this->productModel->id = $product['id'];
+            // Ensure required fields for Product::update() are set (nombre, categoria_id, ...)
+            $this->productModel->nombre = $product['nombre'];
+            $this->productModel->categoria_id = $product['categoria_id'];
+            $this->productModel->descripcion = $product['descripcion'];
+            $this->productModel->imagen = $product['imagen'];
+            $this->productModel->precio = $product['precio'] ?? 0;
+            $this->productModel->stock_minimo = $product['stock_minimo'] ?? 5;
             $this->productModel->update();
 
             $this->movementModel->id = $id;

@@ -9,33 +9,59 @@ document.addEventListener('DOMContentLoaded', () => {
 // Función para cargar movimientos
 async function loadMovements() {
     try {
-        const response = await fetch('/proyecto-3er-trayecto/movimientos?limit=10');
+        const response = await fetch('/proyecto-3er-trayecto/movimientos?limit=50');
         const result = await response.json();
 
-        if (result.status === 'success') {
+        if (result && result.status === 'success') {
             const movementsList = document.getElementById('movements-list');
             movementsList.innerHTML = ''; // Limpiar la lista antes de cargar
 
-            result.data.forEach(movement => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="px-6 dark:text-white py-4">${new Date(movement.created_at).toLocaleDateString()}</td>
-                    <td class="px-6 dark:text-white py-4">${movement.producto_id}</td>
-                    <td class="px-6 dark:text-white py-4">${movement.cantidad}</td>
-                    <td class="px-6 dark:text-white py-4">${movement.tipo}</td>
-                    <td class="px-6 py-4">
-                        <button onclick="editMovement(${movement.id})" class="text-blue-600 hover:underline">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button onclick="deleteMovement(${movement.id})" class="text-red-600 hover:underline">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                `;
-                movementsList.appendChild(row);
-            });
+            if (!result.data || result.data.length === 0) {
+                movementsList.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-6">No hay registros</td></tr>';
+            } else {
+                result.data.forEach(movement => {
+                    const isEditable = movement.is_editable;
+                    const row = document.createElement('tr');
+
+                    const tipoBase = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold shadow-sm ring-1 ring-inset transition-colors duration-150 select-none';
+                    const tipoClass = movement.tipo === 'entrada'
+                        ? tipoBase + ' bg-green-50 text-green-800 ring-green-200 hover:bg-green-100 dark:bg-green-700 dark:text-white dark:ring-green-600 dark:hover:bg-green-600'
+                        : tipoBase + ' bg-red-50 text-red-800 ring-red-200 hover:bg-red-100 dark:bg-red-700 dark:text-white dark:ring-red-600 dark:hover:bg-red-600';
+
+                    const tipoIcon = movement.tipo === 'entrada' ? '<i class="fas fa-arrow-down text-sm"></i>' : '<i class="fas fa-arrow-up text-sm"></i>';
+                    const tipoLabel = movement.tipo ? (movement.tipo.charAt(0).toUpperCase() + movement.tipo.slice(1)) : '';
+
+                    const actionHtml = isEditable
+                        ? '<button onclick="editMovement(' + movement.id + ')" class="text-blue-600 hover:underline" title="Editar">' +
+                          '<i class="fas fa-edit"></i>' +
+                          '</button>' +
+                          '<button onclick="deleteMovement(' + movement.id + ')" class="text-red-600 hover:underline ml-2" title="Eliminar">' +
+                          '<i class="fas fa-trash"></i>' +
+                          '</button>'
+                        : '<span class="text-gray-400 text-sm" title="Solo se puede editar el último movimiento de cada producto">' +
+                          '<i class="fas fa-lock"></i> Bloqueado' +
+                          '</span>';
+
+                    row.innerHTML =
+                        '<td class="px-6 dark:text-white py-4">' + new Date(movement.created_at).toLocaleDateString() + '</td>' +
+                        '<td class="px-6 dark:text-white py-4">' + (movement.producto_nombre || movement.producto_id) + '</td>' +
+                        '<td class="px-6 dark:text-white py-4">' + movement.cantidad + '</td>' +
+                        '<td class="px-6 py-4">' +
+                            '<span class="' + tipoClass + '">' +
+                                tipoIcon +
+                                '<span class="capitalize">' + tipoLabel + '</span>' +
+                            '</span>' +
+                        '</td>' +
+                        '<td class="px-6 py-4">' + actionHtml + '</td>';
+
+                    movementsList.appendChild(row);
+                });
+            }
+        } else if (result && Array.isArray(result.data) && result.data.length === 0) {
+            const movementsList = document.getElementById('movements-list');
+            movementsList.innerHTML = '<tr><td colspan="5" class="text-center text-gray-500 py-6">No hay registros</td></tr>';
         } else {
-            console.error(result.message);
+            console.error(result && result.message ? result.message : 'Error al cargar movimientos');
         }
     } catch (error) {
         console.error('Error al cargar movimientos:', error);
@@ -141,17 +167,32 @@ const editMovement = async (id) => {
         const response = await fetch(`/proyecto-3er-trayecto/movimientos/${id}`);
         const result = await response.json();
         
-        if (result.status === 'success') {
+        if (result.status === 'success' && result.data) {
+            const movement = result.data;
+            
+            // Verificar si es editable
+            if (!movement.is_editable) {
+                showNotification('Solo se puede editar el último movimiento de este producto', true);
+                return;
+            }
+            
+            // Cargar productos primero para asegurar que el select esté poblado
+            await loadProducts();
+            
+            // Establecer los valores del formulario
             document.getElementById('movementId').value = id;
-            document.getElementById('movementProduct').value = result.data.producto_id;
-            document.getElementById('movementQuantity').value = result.data.cantidad;
-            document.getElementById('movementType').value = result.data.tipo;
-            document.getElementById('movementReason').value = result.data.motivo;
+            document.getElementById('movementProduct').value = movement.producto_id;
+            document.getElementById('movementQuantity').value = movement.cantidad;
+            document.getElementById('movementType').value = movement.tipo;
+            document.getElementById('movementReason').value = movement.motivo || '';
             
             document.getElementById('movementModalTitle').textContent = 'Editar Movimiento';
-            openMovementModal();
+            document.getElementById('movementModal').classList.remove('hidden');
+        } else {
+            showNotification('Error al cargar el movimiento', true);
         }
     } catch (error) {
+        console.error('Error:', error);
         showNotification('Error al cargar movimiento', true);
     }
 }
@@ -218,3 +259,11 @@ const saveMovement = async () => {
 const deleteMovement = (movementId) => {
     showDeleteModal(movementId);
 }
+
+// Exponer funciones globalmente usadas por atributos onclick en el HTML
+window.openMovementModal = openMovementModal;
+window.closeMovementModal = closeMovementModal;
+window.saveMovement = saveMovement;
+window.closeDeleteModal = closeDeleteModal;
+window.confirmDelete = confirmDelete;
+window.showDeleteModal = showDeleteModal;

@@ -12,9 +12,12 @@ document.addEventListener('DOMContentLoaded', () => {
         productsGrid: document.getElementById('productsGrid'),
         loader: document.getElementById('loader'),
         noResults: document.getElementById('noResults'),
+        noResultsIcon: document.getElementById('noResultsIcon'),
+        noResultsText: document.getElementById('noResultsText'),
         categoryFilter: document.getElementById('categoryFilter'),
         searchInput: document.getElementById('searchInput'),
         clearFiltersBtn: document.getElementById('clearFilters')
+        ,retryBtn: document.getElementById('retryLoad')
         ,paginationContainer: document.getElementById('pagination')
     };
 
@@ -26,7 +29,32 @@ document.addEventListener('DOMContentLoaded', () => {
             once: true,
             duration: 800
         });
-        
+        // obtener tasa de cambio desde cache (TTL 24h) si está disponible
+        window.catalogExchangeRate = null;
+        try {
+            const raw = localStorage.getItem('exchangeRateData');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.rate && parsed.fetchedAt && (Date.now() - parsed.fetchedAt) < 24 * 60 * 60 * 1000) {
+                    window.catalogExchangeRate = parseFloat(parsed.rate) || null;
+                }
+            }
+        } catch (e) {
+            console.warn('Error leyendo cache de tasa (catalog):', e);
+            window.catalogExchangeRate = null;
+        }
+
+        // Escuchar actualizaciones forzadas de la tasa
+        window.addEventListener('exchangeRateUpdated', (e) => {
+            try {
+                window.catalogExchangeRate = e && e.detail && e.detail.rate ? e.detail.rate : null;
+            } catch (err) {
+                window.catalogExchangeRate = null;
+            }
+            // re-renderizar con la nueva tasa
+            renderProducts(allProducts);
+        });
+
         await Promise.all([loadCategories(), loadProducts()]);
         setupEventListeners();
     }
@@ -46,6 +74,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
+        if (elements.retryBtn) {
+            elements.retryBtn.addEventListener('click', () => {
+                if (elements.noResults) elements.noResults.style.display = 'none';
+                try { elements.loader.style.display = 'flex'; } catch (e) {}
+                loadProducts();
+            });
+        }
         // pagination clicks (event delegation)
         if (elements.paginationContainer) {
             elements.paginationContainer.addEventListener('click', (e) => {
@@ -80,6 +115,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadProducts() {
+        // show loader when (re)loading
+        try {
+            elements.loader.style.display = 'flex';
+        } catch (e) {}
         try {
             const response = await fetch(apiBaseUrl);
             const result = await response.json();
@@ -90,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error al cargar productos:', error);
-            showNoResults();
+            showNoResults('Ocurrió un error al cargar los productos. Por favor, inténtalo de nuevo más tarde.', true);
         } finally {
             hideLoader();
         }
@@ -102,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         hideNoResults();
 
         if (!Array.isArray(products) || products.length === 0) {
-            showNoResults();
+            showNoResults('No se encontraron productos', false);
             renderPagination(0);
             return;
         }
@@ -115,11 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const end = start + pageSize;
         const pageProducts = products.slice(start, end);
 
-        const productCards = pageProducts.map((product, index) => {
+            const productCards = pageProducts.map((product, index) => {
             const categoryName = getCategoryName(product.categoria_id);
             const stockColor = product.stock > 10 ? 'text-green-600' : product.stock > 0 ? 'text-yellow-600' : 'text-red-600';
             const hasStock = product.stock > 0;
             const priceVal = product.precio ?? product.price ?? product.precio_venta ?? null;
+            const priceNum = priceVal !== null ? (parseFloat(priceVal) || 0) : null;
+            const priceBs = (priceNum !== null && window.catalogExchangeRate) ? (priceNum * window.catalogExchangeRate).toFixed(2) : null;
 
             return `
             <div class="native-card" data-aos="fade-up" data-aos-delay="${Math.min(index * 50, 300)}">
@@ -141,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h3 class="text-base font-semibold text-gray-800 leading-snug line-clamp-2" title="${product.nombre}">${product.nombre}</h3>
                     <p class="text-sm text-gray-500 line-clamp-2">${product.descripcion || 'Sin descripción disponible'}</p>
                     <div class="mt-2 native-card-meta">
-                        <div class="native-card-price">${priceVal !== null ? formatPrice(priceVal) : ''}</div>
+                        <div class="native-card-price">${priceNum !== null ? `$${priceNum.toFixed(2)}${priceBs ? ` <span class=\"text-xs text-gray-400\">(Bs. ${priceBs})</span>` : ''}` : ''}</div>
                         <div class="native-card-actions">
                             <button class="btn-outline" onclick="viewProductDetail(${product.id})">Ver</button>
                             <button class="btn-primary" onclick="viewProductDetail(${product.id})">Detalles</button>
@@ -193,22 +234,37 @@ document.addEventListener('DOMContentLoaded', () => {
         renderProducts(filtered);
     }
 
-    function showNoResults() {
+    function showNoResults(message = 'No se encontraron productos', isError = false) {
+        // hide grid and pagination
         elements.productsGrid.style.display = 'none';
         elements.productsGrid.innerHTML = '';
-        elements.noResults.style.display = 'block';
         if (elements.paginationContainer) elements.paginationContainer.innerHTML = '';
+
+        // set message and icon
+        try {
+            if (elements.noResultsText) elements.noResultsText.textContent = message;
+            if (elements.noResultsIcon) {
+                if (isError) {
+                    elements.noResultsIcon.className = 'fas fa-exclamation-triangle text-6xl text-red-400 mb-4';
+                } else {
+                    elements.noResultsIcon.className = 'fas fa-search text-6xl text-gray-300 mb-4';
+                }
+            }
+            if (elements.retryBtn) elements.retryBtn.style.display = isError ? 'inline-flex' : 'none';
+        } catch (e) {}
+
+        if (elements.noResults) elements.noResults.style.display = 'block';
     }
 
     function hideNoResults() {
-        elements.noResults.style.display = 'none';
+        if (elements.noResults) elements.noResults.style.display = 'none';
         // ensure grid becomes visible when hiding the message
-        elements.productsGrid.style.display = 'grid';
+        if (elements.productsGrid) elements.productsGrid.style.display = 'grid';
     }
 
     function hideLoader() {
-        elements.loader.style.display = 'none';
-        elements.productsGrid.style.display = 'grid';
+        try { elements.loader.style.display = 'none'; } catch (e) {}
+        try { elements.productsGrid.style.display = 'grid'; } catch (e) {}
     }
 
     function renderPagination(totalItems){

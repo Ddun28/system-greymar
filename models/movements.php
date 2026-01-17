@@ -1,5 +1,6 @@
 <?php
 require_once '../config/database.php';
+require_once '../models/Audit.php';
 
 class Movement {
     private $db;
@@ -10,6 +11,7 @@ class Movement {
     public $tipo;
     public $cantidad;
     public $motivo;
+    public $usuario_id;
     public $created_at;
 
     public function __construct() {
@@ -23,7 +25,8 @@ class Movement {
                  SET producto_id = :producto_id,
                      tipo = :tipo,
                      cantidad = :cantidad,
-                     motivo = :motivo";
+                     motivo = :motivo,
+                     usuario_id = :usuario_id";
 
         $stmt = $this->db->prepare($query);
         
@@ -31,12 +34,23 @@ class Movement {
         $stmt->bindParam(':tipo', $this->tipo);
         $stmt->bindParam(':cantidad', $this->cantidad, PDO::PARAM_INT);
         $stmt->bindParam(':motivo', $this->motivo);
+        $stmt->bindParam(':usuario_id', $this->usuario_id, PDO::PARAM_INT);
 
         if(!$stmt->execute()) {
             throw new Exception("Error al registrar movimiento");
         }
         
-        return true;
+        $newId = $this->db->lastInsertId();
+        
+        // Registrar auditoría
+        Audit::log('movimientos_inventario', $newId, 'crear', null, [
+            'producto_id' => $this->producto_id,
+            'tipo' => $this->tipo,
+            'cantidad' => $this->cantidad,
+            'motivo' => $this->motivo
+        ]);
+        
+        return $newId;
     }
 
     public function read() {
@@ -68,6 +82,9 @@ class Movement {
 public function update() {
     $this->validateRequiredFields(['id', 'tipo', 'cantidad']);
     
+    // Obtener datos anteriores para auditoría
+    $oldData = $this->getById($this->id);
+    
     $query = "UPDATE movimientos_inventario SET 
                 tipo = :tipo,
                 cantidad = :cantidad,
@@ -84,11 +101,21 @@ public function update() {
         throw new Exception("Error al actualizar movimiento");
     }
     
+    // Registrar auditoría
+    Audit::log('movimientos_inventario', $this->id, 'editar', $oldData, [
+        'tipo' => $this->tipo,
+        'cantidad' => $this->cantidad,
+        'motivo' => $this->motivo
+    ]);
+    
     return true;
 }
 
     public function delete() {
         $this->validateRequiredFields(['id']);
+        
+        // Obtener datos anteriores para auditoría
+        $oldData = $this->getById($this->id);
         
         $query = "DELETE FROM movimientos_inventario WHERE id = :id";
         $stmt = $this->db->prepare($query);
@@ -98,7 +125,30 @@ public function update() {
             throw new Exception("Error al eliminar movimiento");
         }
         
+        // Registrar auditoría
+        Audit::log('movimientos_inventario', $this->id, 'eliminar', $oldData, null);
+        
         return true;
+    }
+
+    /**
+     * Verificar si un movimiento es el último de su producto
+     */
+    public function isLastMovementForProduct($movimiento_id) {
+        $movement = $this->getById($movimiento_id);
+        if (!$movement) return false;
+        
+        $query = "SELECT id FROM movimientos_inventario 
+                  WHERE producto_id = :producto_id 
+                  ORDER BY created_at DESC, id DESC 
+                  LIMIT 1";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':producto_id', $movement['producto_id'], PDO::PARAM_INT);
+        $stmt->execute();
+        $last = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $last && $last['id'] == $movimiento_id;
     }
 
     public function getRecent($limit = 10) {

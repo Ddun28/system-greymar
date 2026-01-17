@@ -1,5 +1,6 @@
 <?php
 require_once '../config/database.php';
+require_once '../models/Audit.php';
 
 class Product {
     private $db;
@@ -13,6 +14,10 @@ class Product {
     public $imagen;
     public $categoria_id;
     public $stock;
+    public $precio;
+    public $stock_minimo;
+    public $creado_por;
+    public $actualizado_por;
     public $created_at;
 
     public function __construct() {
@@ -39,7 +44,10 @@ public function rollBack() {
                      descripcion = :descripcion,
                      imagen = :imagen,
                      categoria_id = :categoria_id,
-                     stock = :stock";
+                     stock = :stock,
+                     precio = :precio,
+                     stock_minimo = :stock_minimo,
+                     creado_por = :creado_por";
 
         $stmt = $this->db->prepare($query);
         
@@ -48,23 +56,44 @@ public function rollBack() {
         $stmt->bindParam(':imagen', $this->imagen);
         $stmt->bindParam(':categoria_id', $this->categoria_id, PDO::PARAM_INT);
         $stmt->bindParam(':stock', $this->stock, PDO::PARAM_INT);
+        $stmt->bindParam(':precio', $this->precio);
+        $stmt->bindParam(':stock_minimo', $this->stock_minimo, PDO::PARAM_INT);
+        $stmt->bindParam(':creado_por', $this->creado_por, PDO::PARAM_INT);
 
         if(!$stmt->execute()) {
             throw new Exception("Error al crear producto");
         }
         
-        return $this->db->lastInsertId();
+        $newId = $this->db->lastInsertId();
+        
+        // Registrar auditoría
+        Audit::log('productos', $newId, 'crear', null, [
+            'nombre' => $this->nombre,
+            'descripcion' => $this->descripcion,
+            'categoria_id' => $this->categoria_id,
+            'stock' => $this->stock,
+            'precio' => $this->precio,
+            'stock_minimo' => $this->stock_minimo
+        ]);
+        
+        return $newId;
     }
 
     public function update() {
         $this->validateRequiredFields(['id', 'nombre', 'categoria_id']);
+        
+        // Obtener datos anteriores para auditoría
+        $oldData = $this->getById($this->id);
         
         $query = "UPDATE $this->table 
                  SET nombre = :nombre,
                      descripcion = :descripcion,
                      imagen = :imagen,
                      categoria_id = :categoria_id,
-                     stock = :stock
+                     stock = :stock,
+                     precio = :precio,
+                     stock_minimo = :stock_minimo,
+                     actualizado_por = :actualizado_por
                  WHERE id = :id";
 
         $stmt = $this->db->prepare($query);
@@ -74,17 +103,41 @@ public function rollBack() {
         $stmt->bindParam(':imagen', $this->imagen);
         $stmt->bindParam(':categoria_id', $this->categoria_id, PDO::PARAM_INT);
         $stmt->bindParam(':stock', $this->stock, PDO::PARAM_INT);
+        $stmt->bindParam(':precio', $this->precio);
+        $stmt->bindParam(':stock_minimo', $this->stock_minimo, PDO::PARAM_INT);
+        $stmt->bindParam(':actualizado_por', $this->actualizado_por, PDO::PARAM_INT);
         $stmt->bindParam(':id', $this->id, PDO::PARAM_INT);
 
         if(!$stmt->execute()) {
             throw new Exception("Error al actualizar producto");
         }
         
+        // Registrar auditoría
+        Audit::log('productos', $this->id, 'editar', $oldData, [
+            'nombre' => $this->nombre,
+            'descripcion' => $this->descripcion,
+            'categoria_id' => $this->categoria_id,
+            'stock' => $this->stock,
+            'precio' => $this->precio,
+            'stock_minimo' => $this->stock_minimo
+        ]);
+        
         return true;
+    }
+
+    public function getById($id) {
+        $query = "SELECT * FROM $this->table WHERE id = :id";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function delete() {
         $this->validateRequiredFields(['id']);
+        
+        // Obtener datos para auditoría antes de eliminar
+        $oldData = $this->getById($this->id);
         
         $query = "DELETE FROM $this->table WHERE id = :id";
         $stmt = $this->db->prepare($query);
@@ -93,6 +146,9 @@ public function rollBack() {
         if(!$stmt->execute()) {
             throw new Exception("Error al eliminar producto");
         }
+        
+        // Registrar auditoría
+        Audit::log('productos', $this->id, 'eliminar', $oldData, null);
         
         return true;
     }
@@ -146,14 +202,54 @@ public function rollBack() {
             $stmt->bindParam(':cantidad', $cantidad, PDO::PARAM_INT);
             $stmt->bindParam(':motivo', $motivo);
             $stmt->execute();
-            
+
+            $newMovementId = $this->db->lastInsertId();
+
+            // Registrar auditoría del movimiento creado
+            Audit::log('movimientos_inventario', $newMovementId, 'crear', null, [
+                'producto_id' => $this->id,
+                'tipo' => $tipo,
+                'cantidad' => $cantidad,
+                'motivo' => $motivo
+            ]);
+
             $this->db->commit();
-            return true;
+            return $newMovementId;
             
         } catch (Exception $e) {
             $this->db->rollBack();
             throw new Exception("Error en movimiento de inventario: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Obtener productos con stock crítico (stock <= stock_minimo)
+     */
+    public function getLowStockProducts() {
+        $query = "SELECT p.*, c.nombre as categoria 
+                  FROM $this->table p
+                  LEFT JOIN categorias c ON p.categoria_id = c.id
+                  WHERE p.stock <= p.stock_minimo
+                  ORDER BY (p.stock_minimo - p.stock) DESC, p.nombre ASC";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtener el último movimiento de un producto
+     */
+    public function getLastMovement($producto_id) {
+        $query = "SELECT * FROM $this->movementsTable 
+                  WHERE producto_id = :producto_id 
+                  ORDER BY created_at DESC, id DESC 
+                  LIMIT 1";
+        
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':producto_id', $producto_id, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     private function validateRequiredFields($fields) {
